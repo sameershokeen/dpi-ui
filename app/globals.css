@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+:root {
+  --bg-base: #F2F1EF;
+  --bg-card: #FAFAF8;
+  --bg-elevated: #FFFFFF;
+  --border: #E4E2DE;
+  --border-subtle: #EEECE9;
+  --text-primary: #1A1917;
+  --text-secondary: #6B6860;
+  --text-muted: #9E9C98;
+  --accent: #5B4FE9;
+  --accent-light: #EEF0FF;
+  --accent-hover: #4A40D4;
+  --success: #22C97A;
+  --success-light: #E8FAF1;
+  --warning: #F5A623;
+  --danger: #E8453C;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.06);
+}
+
+@theme inline {
+  --color-background: var(--bg-base);
+  --color-foreground: var(--text-primary);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Text', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Wallet adapter override */
+.wallet-adapter-button {
+  background: var(--accent) !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  height: 44px !important;
+}
+.wallet-adapter-button:hover {
+  background: var(--accent-hover) !important;
+}
+.wallet-adapter-modal-wrapper {
+  border-radius: 20px !important;
+}
