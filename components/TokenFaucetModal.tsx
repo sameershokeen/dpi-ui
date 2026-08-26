@@ -94,7 +94,7 @@ export default function TokenFaucetModal({
             onClick={copyWalletAddr}
             className="flex items-center justify-between p-2.5 rounded-xl bg-white/4 border border-white/10 text-xs text-slate-300 hover:bg-white/8 transition-colors cursor-pointer"
           >
-            <span className="truncate max-w-[200px] font-mono text-[11px]">
+            <span className="truncate max-w-200px font-mono text-[11px]">
               {publicKey.toBase58().slice(0, 10)}...{publicKey.toBase58().slice(-8)}
             </span>
             <span className="text-indigo-400 font-bold text-[11px] flex items-center gap-1 shrink-0">
