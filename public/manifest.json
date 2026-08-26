@@ -1,0 +1,16 @@
+{
+  "name": "DPI — Solana Decentralized Public Infrastructure",
+  "short_name": "DPI",
+  "description": "Decentralized handle registry and instant payment protocol on Solana.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090B10",
+  "theme_color": "#090B10",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

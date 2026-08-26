@@ -3,20 +3,20 @@
 import Header from "@/components/Header";
 import Card from "@/components/Card";
 import StatusBadge from "@/components/StatusBadge";
-import { Megaphone, Globe, Shield, Zap, ExternalLink } from "lucide-react";
+import { Megaphone, Globe, Shield, Zap, ExternalLink, Sparkles } from "lucide-react";
 
 const ANNOUNCEMENTS = [
   {
     id: 1,
     type: "launch",
     icon: Zap,
-    iconColor: "#5B4FE9",
-    iconBg: "#EEF0FF",
-    title: "DPI Registry is live on Devnet!",
-    body: "The DPI Handle Registry smart contract has been deployed on Solana Devnet. Claim your @handle now. Program ID: CEyRA234cQ3u3KCjE2tRzobZQg7GgyhQBL11JTWA9WVc",
-    badge: "Launch",
+    iconColor: "text-indigo-400",
+    iconBg: "bg-indigo-500/20 border-indigo-500/30",
+    title: "DPI Protocol Live on Solana Devnet",
+    body: "The Decentralized Public Infrastructure Handle Registry program is live. Register human-readable handles and route instant payments directly on Solana.",
+    badge: "Live",
     badgeStatus: "accent" as const,
-    date: "Today",
+    date: "Latest",
     link: "https://explorer.solana.com/address/CEyRA234cQ3u3KCjE2tRzobZQg7GgyhQBL11JTWA9WVc?cluster=devnet",
     linkLabel: "View Contract",
   },
@@ -24,10 +24,10 @@ const ANNOUNCEMENTS = [
     id: 2,
     type: "info",
     icon: Shield,
-    iconColor: "#22C97A",
-    iconBg: "#E8FAF1",
-    title: "Handle governance rules",
-    body: "DPI maintains a reserved handle list to protect the ecosystem: admin, support, help, security, dpi, team. These cannot be registered by any wallet. Admin can also freeze handles violating community standards.",
+    iconColor: "text-emerald-400",
+    iconBg: "bg-emerald-500/20 border-emerald-500/30",
+    title: "Ecosystem Security & Reserved Namespace",
+    body: "To prevent identity spoofing, critical namespaces ('admin', 'team', 'support', 'security', 'dpi') are protected on-chain by the program authority.",
     badge: "Governance",
     badgeStatus: "success" as const,
     date: "Pinned",
@@ -36,10 +36,10 @@ const ANNOUNCEMENTS = [
     id: 3,
     type: "info",
     icon: Globe,
-    iconColor: "#F5A623",
-    iconBg: "#FFF8EC",
-    title: "One wallet. One handle. Always.",
-    body: "The DPI protocol enforces that each wallet can only register one handle. This is enforced on-chain via a ReverseLookup PDA — no way around it. Handles are transferable unless frozen by admin.",
+    iconColor: "text-amber-400",
+    iconBg: "bg-amber-500/20 border-amber-500/30",
+    title: "One Wallet · One Handle Rule",
+    body: "Each Solana wallet address maps to a unique ReverseLookup PDA on-chain, creating a clean 1:1 identity record without duplicates.",
     badge: "Protocol",
     badgeStatus: "warning" as const,
     date: "Pinned",
@@ -48,94 +48,55 @@ const ANNOUNCEMENTS = [
     id: 4,
     type: "announcement",
     icon: Megaphone,
-    iconColor: "#E8453C",
-    iconBg: "#FFEEED",
-    title: "Mainnet launch coming soon",
-    body: "We are currently on Devnet. Mainnet deployment is planned after thorough security audits. All Devnet handles will not carry over — claim early to secure your handle name for mainnet.",
-    badge: "Upcoming",
-    badgeStatus: "danger" as const,
-    date: "Upcoming",
+    iconColor: "text-pink-400",
+    iconBg: "bg-pink-500/20 border-pink-500/30",
+    title: "SPL Token & Token-2022 Support",
+    body: "DPI supports native SOL transfers along with devnet stablecoins (USDC, EURC, PYUSD) and custom SPL token mint routing.",
+    badge: "Feature",
+    badgeStatus: "neutral" as const,
+    date: "Devnet",
   },
 ];
 
 export default function CommunityPage() {
   return (
-    <div>
-      <Header title="Community" />
-      <div style={{ padding: "20px" }}>
-        {/* Header section */}
-        <div
-          style={{
-            background: "linear-gradient(135deg, var(--accent) 0%, #7B6FF0 100%)",
-            borderRadius: 16,
-            padding: "20px",
-            marginBottom: 20,
-            color: "white",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-            <Megaphone size={20} />
-            <span style={{ fontSize: 16, fontWeight: 700 }}>DPI Announcements</span>
+    <div className="w-full">
+      <Header title="Community & Governance" />
+      <div className="px-4 py-4 flex flex-col gap-4">
+        {/* Banner */}
+        <div className="rounded-2xl p-5 bg-linear-to-br from-indigo-900/60 via-purple-900/40 to-[#101422] border border-indigo-500/30 backdrop-blur-xl shadow-lg relative overflow-hidden">
+          <div className="flex items-center gap-2 mb-1.5 text-white font-bold text-base">
+            <Sparkles size={18} className="text-indigo-400" />
+            <span>DPI Ecosystem Feed</span>
           </div>
-          <p style={{ fontSize: 13, opacity: 0.85, margin: 0, lineHeight: 1.5 }}>
-            Official updates from the DPI team. Protocol governance, feature launches, and community news.
+          <p className="text-xs text-slate-300 leading-relaxed">
+            Official announcements, smart contract updates, and governance parameters for the DPI Solana protocol.
           </p>
         </div>
 
-        {/* Announcements */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {/* Announcements List */}
+        <div className="flex flex-col gap-3">
           {ANNOUNCEMENTS.map((item) => {
             const Icon = item.icon;
             return (
-              <Card key={item.id} style={{ padding: "16px" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 14,
-                  }}
-                >
+              <Card key={item.id} className="p-4.5">
+                <div className="flex items-start gap-3.5">
                   <div
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 12,
-                      background: item.iconBg,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
+                    className={`w-10 h-10 rounded-xl ${item.iconBg} border flex items-center justify-center shrink-0 shadow-sm`}
                   >
-                    <Icon size={20} color={item.iconColor} />
+                    <Icon size={18} className={item.iconColor} />
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 8,
-                        marginBottom: 6,
-                        flexWrap: "wrap",
-                      }}
-                    >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
                       <StatusBadge status={item.badgeStatus}>{item.badge}</StatusBadge>
-                      <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                      <span className="text-[11px] text-slate-400 font-medium">
                         {item.date}
                       </span>
                     </div>
-                    <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, lineHeight: 1.3 }}>
+                    <div className="text-sm font-bold text-white mb-1 leading-snug">
                       {item.title}
                     </div>
-                    <div
-                      style={{
-                        fontSize: 13,
-                        color: "var(--text-secondary)",
-                        lineHeight: 1.6,
-                        wordBreak: "break-word",
-                      }}
-                    >
+                    <div className="text-xs text-slate-300 leading-relaxed">
                       {item.body}
                     </div>
                     {item.link && (
@@ -143,16 +104,7 @@ export default function CommunityPage() {
                         href={item.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 4,
-                          marginTop: 10,
-                          fontSize: 12,
-                          color: "var(--accent)",
-                          textDecoration: "none",
-                          fontWeight: 600,
-                        }}
+                        className="inline-flex items-center gap-1 mt-2.5 text-xs font-bold text-indigo-400 hover:text-indigo-300"
                       >
                         {item.linkLabel} <ExternalLink size={12} />
                       </a>
@@ -164,50 +116,21 @@ export default function CommunityPage() {
           })}
         </div>
 
-        {/* Contract info footer */}
-        <Card style={{ padding: "16px", marginTop: 16 }}>
-          <div
-            style={{
-              fontSize: 12,
-              color: "var(--text-muted)",
-              fontWeight: 600,
-              marginBottom: 10,
-            }}
-          >
-            CONTRACT INFO
+        {/* Smart Contract Card */}
+        <Card className="p-4 flex flex-col gap-2 bg-[#121626]/40">
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+            Verified Smart Contract
           </div>
-          <div style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.8 }}>
-            <div>
-              Program ID:{" "}
-              <span
-                style={{
-                  fontFamily: "monospace",
-                  fontSize: 11,
-                  color: "var(--text-primary)",
-                  wordBreak: "break-all",
-                }}
-              >
-                CEyRA234cQ3u3KCjE2tRzobZQg7GgyhQBL11JTWA9WVc
-              </span>
-            </div>
-            <div style={{ marginTop: 4 }}>Network: Solana Devnet</div>
+          <div className="text-xs text-slate-300 leading-relaxed font-mono break-all bg-white/3 p-2.5 rounded-xl border border-white/6">
+            CEyRA234cQ3u3KCjE2tRzobZQg7GgyhQBL11JTWA9WVc
           </div>
           <a
             href="https://explorer.solana.com/address/CEyRA234cQ3u3KCjE2tRzobZQg7GgyhQBL11JTWA9WVc?cluster=devnet"
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 4,
-              marginTop: 10,
-              fontSize: 12,
-              color: "var(--accent)",
-              textDecoration: "none",
-              fontWeight: 600,
-            }}
+            className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-semibold mt-1"
           >
-            Open in Explorer <ExternalLink size={12} />
+            Inspect on Solana Explorer <ExternalLink size={12} />
           </a>
         </Card>
       </div>

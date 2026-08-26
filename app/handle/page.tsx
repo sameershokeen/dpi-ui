@@ -1,130 +1,226 @@
 "use client";
 
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
-  PublicKey,
   SystemProgram,
   Transaction,
   TransactionInstruction,
+  PublicKey,
 } from "@solana/web3.js";
 import Header from "@/components/Header";
 import Card from "@/components/Card";
 import StatusBadge from "@/components/StatusBadge";
+import QRCodeModal from "@/components/QRCodeModal";
+import TransactionStepperModal, { StepperStage } from "@/components/TransactionStepperModal";
+import { WalletMultiButton } from "@/components/WalletButton";
+import { useToast } from "@/components/Toast";
+import { triggerHaptic } from "@/lib/haptics";
 import {
   DPI_PROGRAM_ID,
   getHandleRegistryPDA,
   getReverseLookupPDA,
   getReservedHandlePDA,
-  getConfigPDA,
   validateHandle,
 } from "@/lib/dpi-program";
-import { AtSign, CheckCircle, XCircle, Loader, AlertTriangle } from "lucide-react";
+import { lookupHandleCached, lookupReverseCached, invalidateHandleCache } from "@/lib/dpi-cache";
+import {
+  AtSign,
+  CheckCircle,
+  XCircle,
+  Loader,
+  AlertTriangle,
+  ExternalLink,
+  Sparkles,
+  ShieldCheck,
+  Search,
+  Send,
+  User,
+  ArrowRightLeft,
+  QrCode,
+  Check,
+  Globe,
+  X,
+  Copy,
+} from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-type Step = "idle" | "checking" | "available" | "taken" | "registering" | "success" | "error";
+type SearchState = "idle" | "checking" | "available" | "taken" | "reserved" | "error";
+
+const POPULAR_SEARCH_SUGGESTIONS = ["solana", "satoshi", "vitalik", "alice", "bob", "pay", "dpi"];
 
 export default function HandlePage() {
   const { publicKey, connected, signTransaction } = useWallet();
   const { connection } = useConnection();
+  const router = useRouter();
+  const toast = useToast();
 
-  const [handle, setHandle] = useState("");
-  const [step, setStep] = useState<Step>("idle");
-  const [errorMsg, setErrorMsg] = useState("");
+  // Search & Checker state
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchState, setSearchState] = useState<SearchState>("idle");
+  const [searchOwner, setSearchOwner] = useState<string | null>(null);
+  const [searchError, setSearchError] = useState("");
+  const checkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // User's own registered handle
   const [myHandle, setMyHandle] = useState<string | null>(null);
   const [myHandleFrozen, setMyHandleFrozen] = useState(false);
-  const [txSig, setTxSig] = useState("");
-  const [checkTimer, setCheckTimer] = useState<NodeJS.Timeout | null>(null);
+  const [loadingMyHandle, setLoadingMyHandle] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [copiedHandle, setCopiedHandle] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
 
-  // Load existing handle on mount
-  useEffect(() => {
+  // Registration modal & stepper state
+  const [registering, setRegistering] = useState(false);
+  const [stepperOpen, setStepperOpen] = useState(false);
+  const [stepperStage, setStepperStage] = useState<StepperStage>("signing");
+  const [txSig, setTxSig] = useState("");
+
+  // Transfer Handle Modal State
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [newOwnerAddress, setNewOwnerAddress] = useState("");
+  const [transferring, setTransferring] = useState(false);
+
+  // Fetch current user's registered handle
+  const loadMyHandle = useCallback(async () => {
     if (!publicKey || !connection) return;
-    const fetch = async () => {
-      try {
-        const [reversePDA] = getReverseLookupPDA(publicKey);
-        const accountInfo = await connection.getAccountInfo(reversePDA);
-        if (accountInfo?.data) {
-          const data = accountInfo.data;
-          const strLen = data.readUInt32LE(8 + 32);
-          const handleStr = data.slice(8 + 32 + 4, 8 + 32 + 4 + strLen).toString("utf-8");
-          setMyHandle(handleStr);
-
-          // Check frozen
-          const [handlePDA] = getHandleRegistryPDA(handleStr);
-          const hrInfo = await connection.getAccountInfo(handlePDA);
-          if (hrInfo?.data) {
-            const frozen = hrInfo.data[hrInfo.data.length - 1] === 1;
-            setMyHandleFrozen(frozen);
-          }
+    setLoadingMyHandle(true);
+    try {
+      const handleStr = await lookupReverseCached(connection, publicKey);
+      if (handleStr) {
+        setMyHandle(handleStr);
+        const hrData = await lookupHandleCached(connection, handleStr);
+        if (hrData) {
+          setMyHandleFrozen(hrData.frozen);
         }
-      } catch {}
-    };
-    fetch();
+      } else {
+        setMyHandle(null);
+        setMyHandleFrozen(false);
+      }
+    } catch (err) {
+      console.warn("Failed reading my handle", err);
+      setMyHandle(null);
+    } finally {
+      setLoadingMyHandle(false);
+    }
   }, [publicKey, connection]);
 
-  // Load profile photo from localStorage
   useEffect(() => {
-    if (publicKey) {
+    if (connected && publicKey) {
+      loadMyHandle();
       const stored = localStorage.getItem(`dpi_avatar_${publicKey.toBase58()}`);
       setProfilePhoto(stored);
     } else {
+      setMyHandle(null);
       setProfilePhoto(null);
     }
-  }, [publicKey]);
+  }, [connected, publicKey, loadMyHandle]);
 
-  const onHandleChange = (val: string) => {
+  // Handle checking logic
+  const checkAvailability = useCallback(
+    async (h: string) => {
+      setSearchState("checking");
+      setSearchOwner(null);
+      setSearchError("");
+
+      const lower = h.toLowerCase().trim();
+      const validation = validateHandle(lower);
+      if (validation) {
+        if (validation.includes("reserved")) {
+          setSearchState("reserved");
+        } else {
+          setSearchState("error");
+          setSearchError(validation);
+        }
+        return;
+      }
+
+      try {
+        const handleInfo = await lookupHandleCached(connection, lower);
+        if (handleInfo) {
+          setSearchState("taken");
+          setSearchOwner(handleInfo.owner);
+          triggerHaptic("warning");
+        } else {
+          setSearchState("available");
+          triggerHaptic("tap");
+        }
+      } catch {
+        setSearchState("error");
+        setSearchError("Failed to query Solana RPC");
+      }
+    },
+    [connection]
+  );
+
+  const onSearchInputChange = (val: string) => {
     const lower = val.toLowerCase().replace(/[^a-z0-9_-]/g, "");
-    setHandle(lower);
-    setStep("idle");
-    setErrorMsg("");
-    if (checkTimer) clearTimeout(checkTimer);
+    setSearchTerm(lower);
+    setSearchError("");
 
-    const validationError = validateHandle(lower);
-    if (validationError) {
-      setErrorMsg(validationError);
-      return;
-    }
-    if (lower.length >= 3) {
-      const t = setTimeout(() => checkAvailability(lower), 600);
-      setCheckTimer(t);
-    }
-  };
+    if (checkTimerRef.current) clearTimeout(checkTimerRef.current);
 
-  const checkAvailability = async (h: string) => {
-    setStep("checking");
-    try {
-      const [handlePDA] = getHandleRegistryPDA(h);
-      const info = await connection.getAccountInfo(handlePDA);
-      setStep(info ? "taken" : "available");
-    } catch {
-      setStep("error");
-      setErrorMsg("Failed to check availability");
-    }
-  };
-
-  const registerHandle = async () => {
-    if (!publicKey || !signTransaction) return;
-    const validationError = validateHandle(handle);
-    if (validationError) {
-      setErrorMsg(validationError);
+    if (!lower) {
+      setSearchState("idle");
+      setSearchOwner(null);
       return;
     }
 
-    setStep("registering");
-    setErrorMsg("");
+    if (lower.length < 3) {
+      setSearchState("idle");
+      return;
+    }
+
+    setSearchState("checking");
+    checkTimerRef.current = setTimeout(() => {
+      checkAvailability(lower);
+    }, 250);
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    triggerHaptic("tap");
+    setSearchTerm(suggestion);
+    if (checkTimerRef.current) clearTimeout(checkTimerRef.current);
+    checkAvailability(suggestion);
+  };
+
+  // Claim / Register handle
+  const registerHandle = async (targetHandle: string) => {
+    if (!publicKey || !signTransaction) {
+      toast.info("Please connect your Solana wallet first");
+      return;
+    }
+
+    const validationError = validateHandle(targetHandle);
+    if (validationError) {
+      setSearchError(validationError);
+      triggerHaptic("error");
+      toast.error(validationError, "Invalid Handle");
+      return;
+    }
+
+    if (myHandle) {
+      toast.error(
+        `This wallet already owns @${myHandle}. You can only own 1 handle per wallet.`,
+        "Already Claimed"
+      );
+      return;
+    }
+
+    setRegistering(true);
+    setSearchError("");
+    setStepperStage("signing");
+    setStepperOpen(true);
+    triggerHaptic("selection");
 
     try {
-      const [handlePDA] = getHandleRegistryPDA(handle);
+      const [handlePDA] = getHandleRegistryPDA(targetHandle);
       const [reversePDA] = getReverseLookupPDA(publicKey);
-      const [reservedPDA] = getReservedHandlePDA(handle);
+      const [reservedPDA] = getReservedHandlePDA(targetHandle);
 
-      // Encode instruction data manually (Anchor discriminator + string)
-      // "register_handle" discriminator
-      const discriminator = Buffer.from([
-        0x0f, 0xad, 0x15, 0x9e, 0x7d, 0xcc, 0xdd, 0x1d,
-      ]);
-      const handleBytes = Buffer.from(handle, "utf-8");
+      const discriminator = Buffer.from([0x0f, 0xad, 0x15, 0x9e, 0x7d, 0xcc, 0xdd, 0x1d]);
+      const handleBytes = Buffer.from(targetHandle, "utf-8");
       const lenBuf = Buffer.alloc(4);
       lenBuf.writeUInt32LE(handleBytes.length, 0);
       const data = Buffer.concat([discriminator, lenBuf, handleBytes]);
@@ -141,356 +237,550 @@ export default function HandlePage() {
         data,
       });
 
-      const { blockhash } = await connection.getLatestBlockhash();
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
       const tx = new Transaction();
       tx.recentBlockhash = blockhash;
       tx.feePayer = publicKey;
       tx.add(instruction);
 
       const signed = await signTransaction(tx);
+      setStepperStage("broadcasting");
+
       const sig = await connection.sendRawTransaction(signed.serialize());
-      await connection.confirmTransaction(sig, "confirmed");
+      setStepperStage("confirming");
+
+      await connection.confirmTransaction(
+        { signature: sig, blockhash, lastValidBlockHeight },
+        "confirmed"
+      );
 
       setTxSig(sig);
-      setMyHandle(handle);
-      setStep("success");
+      setMyHandle(targetHandle);
+      setSearchState("taken");
+      setSearchOwner(publicKey.toBase58());
+      setStepperStage("done");
+      triggerHaptic("success");
+
+      invalidateHandleCache(targetHandle, publicKey);
+      toast.success(`@${targetHandle} is now claimed on Solana Devnet!`, "Handle Registered 🎉");
     } catch (e: unknown) {
-      setStep("error");
+      triggerHaptic("error");
       const msg = e instanceof Error ? e.message : "Transaction failed";
-      if (msg.includes("0x177a")) setErrorMsg("Wallet already owns a handle");
-      else if (msg.includes("0x1779")) setErrorMsg("Invalid handle format");
-      else if (msg.includes("0x1772")) setErrorMsg("This handle is reserved");
-      else if (msg.includes("0x1776")) setErrorMsg("Handle is already taken");
-      else setErrorMsg(msg);
+      let friendlyError = msg;
+      if (msg.includes("0x177a")) friendlyError = "Wallet already owns a registered handle";
+      else if (msg.includes("0x1779")) friendlyError = "Invalid handle format";
+      else if (msg.includes("0x1772")) friendlyError = "This handle is reserved by DPI";
+      else if (msg.includes("0x1776")) friendlyError = "Handle is already registered";
+
+      setSearchError(friendlyError);
+      toast.error(friendlyError, "Registration Failed");
+    } finally {
+      setRegistering(false);
+      setStepperOpen(false);
     }
   };
 
+  // Transfer Handle logic
+  const handleTransfer = async () => {
+    if (!publicKey || !signTransaction || !myHandle || !newOwnerAddress) return;
+
+    let targetPubKey: PublicKey;
+    try {
+      targetPubKey = new PublicKey(newOwnerAddress.trim());
+    } catch {
+      toast.error("Invalid Solana address for new owner");
+      return;
+    }
+
+    if (targetPubKey.toBase58() === publicKey.toBase58()) {
+      toast.error("You are already the owner of this handle");
+      return;
+    }
+
+    setTransferring(true);
+    setStepperStage("signing");
+    setStepperOpen(true);
+    triggerHaptic("selection");
+
+    try {
+      const [handlePDA] = getHandleRegistryPDA(myHandle);
+      const [currentReversePDA] = getReverseLookupPDA(publicKey);
+      const [newReversePDA] = getReverseLookupPDA(targetPubKey);
+
+      const discriminator = Buffer.from([0x26, 0x14, 0x16, 0x76, 0x6e, 0x05, 0x88, 0x6f]);
+
+      const instruction = new TransactionInstruction({
+        programId: DPI_PROGRAM_ID,
+        keys: [
+          { pubkey: publicKey, isSigner: true, isWritable: false },
+          { pubkey: handlePDA, isSigner: false, isWritable: true },
+          { pubkey: currentReversePDA, isSigner: false, isWritable: true },
+          { pubkey: newReversePDA, isSigner: false, isWritable: true },
+          { pubkey: targetPubKey, isSigner: false, isWritable: false },
+        ],
+        data: discriminator,
+      });
+
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+      const tx = new Transaction();
+      tx.recentBlockhash = blockhash;
+      tx.feePayer = publicKey;
+      tx.add(instruction);
+
+      const signed = await signTransaction(tx);
+      setStepperStage("broadcasting");
+
+      const sig = await connection.sendRawTransaction(signed.serialize());
+      setStepperStage("confirming");
+
+      await connection.confirmTransaction(
+        { signature: sig, blockhash, lastValidBlockHeight },
+        "confirmed"
+      );
+
+      invalidateHandleCache(myHandle, publicKey);
+      invalidateHandleCache(myHandle, targetPubKey);
+
+      setStepperStage("done");
+      triggerHaptic("success");
+      toast.success(`@${myHandle} transferred successfully!`);
+      setTransferOpen(false);
+      setMyHandle(null);
+      loadMyHandle();
+    } catch (err: any) {
+      triggerHaptic("error");
+      toast.error(err.message || "Failed to transfer handle", "Transfer Error");
+    } finally {
+      setTransferring(false);
+      setStepperOpen(false);
+    }
+  };
+
+  const copyMyHandle = () => {
+    if (!myHandle) return;
+    triggerHaptic("tap");
+    navigator.clipboard.writeText(`@${myHandle}`);
+    setCopiedHandle(true);
+    toast.success("Handle copied to clipboard!");
+    setTimeout(() => setCopiedHandle(false), 2000);
+  };
+
   return (
-    <div>
-      <Header title="@Handle" />
-      <div style={{ padding: "20px" }}>
-        {/* My current handle */}
-        {myHandle && (
-          <Card style={{ padding: "16px", marginBottom: 20 }}>
-            <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 8 }}>
-              YOUR HANDLE
+    <div className="w-full">
+      <Header title="Handles & Identity" />
+
+      <div className="px-4 py-4 flex flex-col gap-4">
+        {/* User's Registered Identity Card */}
+        {connected && myHandle && (
+          <div className="relative rounded-3xl p-5 bg-linear-to-br from-[#161D33] via-[#121728] to-[#0D101C] border-2 border-indigo-500/35 shadow-[0_8px_30px_rgba(99,102,241,0.25)] overflow-hidden backdrop-blur-2xl">
+            <div className="absolute -top-10 -right-10 w-36 h-36 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none" />
+
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
+                <ShieldCheck size={14} />
+                Your Primary Identity
+              </span>
+              {myHandleFrozen ? (
+                <StatusBadge status="danger">🔒 Frozen</StatusBadge>
+              ) : (
+                <StatusBadge status="success">✓ Active On-Chain</StatusBadge>
+              )}
             </div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 14,
-                    background: "var(--accent)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 20,
-                    color: "white",
-                    fontWeight: 700,
-                    overflow: "hidden",
-                  }}
-                >
+
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-xl shadow-lg shadow-indigo-500/25 overflow-hidden border border-white/20">
                   {profilePhoto ? (
-                    <img src={profilePhoto} alt="Profile photo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <img src={profilePhoto} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
                     myHandle[0].toUpperCase()
                   )}
                 </div>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: 18 }}>@{myHandle}</div>
-                  <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
-                    {myHandleFrozen ? (
-                      <StatusBadge status="danger">🔒 Frozen</StatusBadge>
-                    ) : (
-                      <StatusBadge status="success">✓ Active</StatusBadge>
-                    )}
+                  <div className="text-xl font-black text-white tracking-tight">@{myHandle}</div>
+                  <div className="text-[11px] text-slate-400 font-mono">
+                    {publicKey
+                      ? `${publicKey.toBase58().slice(0, 6)}...${publicKey.toBase58().slice(-4)}`
+                      : ""}
                   </div>
                 </div>
               </div>
+
+              <button
+                onClick={copyMyHandle}
+                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 active:scale-95 transition-all cursor-pointer"
+                title="Copy @handle"
+              >
+                {copiedHandle ? (
+                  <Check size={16} className="text-emerald-400" />
+                ) : (
+                  <Copy size={16} />
+                )}
+              </button>
+            </div>
+
+            {/* Action buttons */}
+            <div className="grid grid-cols-3 gap-2">
               <Link
                 href={`/handle/${myHandle}`}
-                style={{
-                  fontSize: 13,
-                  color: "var(--accent)",
-                  textDecoration: "none",
-                  fontWeight: 600,
-                  padding: "6px 12px",
-                  background: "var(--accent-light)",
-                  borderRadius: 8,
-                }}
+                className="py-2 px-3 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-all text-center"
               >
-                View Page
+                <Globe size={13} />
+                Public Page
               </Link>
+              <button
+                onClick={() => {
+                  triggerHaptic("tap");
+                  setQrOpen(true);
+                }}
+                className="py-2 px-3 rounded-xl bg-white/6 hover:bg-white/12 border border-white/10 text-white text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+              >
+                <QrCode size={13} />
+                QR Code
+              </button>
+              <button
+                onClick={() => {
+                  triggerHaptic("tap");
+                  setTransferOpen(true);
+                }}
+                className="py-2 px-3 rounded-xl bg-white/6 hover:bg-white/12 border border-white/10 text-amber-300 text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+              >
+                <ArrowRightLeft size={13} />
+                Transfer
+              </button>
             </div>
-          </Card>
+          </div>
         )}
 
-        {/* Register new handle (only if no handle yet) */}
-        {!myHandle && (
-          <>
-            <div
-              style={{
-                marginBottom: 20,
-              }}
-            >
-              <h2
-                style={{
-                  fontSize: 22,
-                  fontWeight: 800,
-                  marginBottom: 6,
-                  color: "var(--text-primary)",
-                }}
-              >
-                Claim your handle
+        {/* Universal Handle Checker & Explorer Card */}
+        <Card className="p-5 flex flex-col gap-4 border-indigo-500/30 bg-linear-to-b from-[#13192B]/95 to-[#0F1322]/95 shadow-xl">
+          <div>
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-black text-white flex items-center gap-2">
+                <Search size={18} className="text-indigo-400" />
+                Handle Availability & Lookup
               </h2>
-              <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.5 }}>
-                One wallet, one handle. Permanently on-chain.
-              </p>
+              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                Universal Checker
+              </span>
             </div>
+            <p className="text-xs text-slate-400 mt-1">
+              Search any handle to check availability on Solana Devnet or explore user pages.
+            </p>
+          </div>
 
-            {!connected ? (
-              <Card style={{ padding: "24px", textAlign: "center" }}>
-                <AtSign size={32} color="var(--text-muted)" style={{ margin: "0 auto 12px" }} />
-                <p style={{ color: "var(--text-secondary)", marginBottom: 4 }}>
-                  Connect your wallet to register a handle
-                </p>
-              </Card>
-            ) : (
-              <Card style={{ padding: "20px" }}>
-                {/* Input */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    background: "var(--bg-base)",
-                    borderRadius: 12,
-                    border: `1.5px solid ${
-                      step === "available"
-                        ? "var(--success)"
-                        : step === "taken" || errorMsg
-                        ? "var(--danger)"
-                        : "var(--border)"
-                    }`,
-                    padding: "0 14px",
-                    gap: 8,
-                    marginBottom: 12,
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: 18,
-                      color: "var(--accent)",
-                      fontWeight: 700,
-                      userSelect: "none",
-                    }}
-                  >
-                    @
-                  </span>
-                  <input
-                    value={handle}
-                    onChange={(e) => onHandleChange(e.target.value)}
-                    placeholder="yourhandle"
-                    maxLength={32}
-                    style={{
-                      flex: 1,
-                      background: "transparent",
-                      border: "none",
-                      outline: "none",
-                      fontSize: 18,
-                      fontWeight: 600,
-                      color: "var(--text-primary)",
-                      padding: "14px 0",
-                      letterSpacing: "-0.3px",
-                    }}
-                  />
-                  <div style={{ width: 24, flexShrink: 0 }}>
-                    {step === "checking" && (
-                      <Loader size={18} color="var(--text-muted)" style={{ animation: "spin 1s linear infinite" }} />
-                    )}
-                    {step === "available" && <CheckCircle size={18} color="var(--success)" />}
-                    {step === "taken" && <XCircle size={18} color="var(--danger)" />}
+          {/* Search Input */}
+          <div
+            className={`flex items-center gap-2 px-4 py-3.5 rounded-2xl bg-white/4 border ${
+              searchState === "available"
+                ? "border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.25)]"
+                : searchState === "taken"
+                ? "border-indigo-500/60 shadow-[0_0_20px_rgba(99,102,241,0.25)]"
+                : searchState === "reserved" || searchError
+                ? "border-rose-500/50"
+                : "border-white/12 hover:border-white/20"
+            } transition-all`}
+          >
+            <span className="text-lg font-black text-indigo-400 select-none">@</span>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => onSearchInputChange(e.target.value)}
+              placeholder="search-or-check-handle"
+              maxLength={32}
+              className="flex-1 bg-transparent border-none outline-none text-base font-bold text-white placeholder:text-slate-600 tracking-tight"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => {
+                  setSearchTerm("");
+                  setSearchState("idle");
+                  setSearchError("");
+                  setSearchOwner(null);
+                }}
+                className="text-slate-500 hover:text-slate-300 p-1 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            )}
+            <div className="w-6 shrink-0 flex items-center justify-center">
+              {searchState === "checking" && (
+                <Loader size={16} className="animate-spin text-indigo-400" />
+              )}
+              {searchState === "available" && (
+                <CheckCircle size={18} className="text-emerald-400" />
+              )}
+              {searchState === "taken" && <User size={18} className="text-indigo-400" />}
+              {(searchState === "reserved" || searchError) && (
+                <XCircle size={18} className="text-rose-400" />
+              )}
+            </div>
+          </div>
+
+          {/* Quick Suggestions Chips */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[11px] text-slate-500 font-medium">Try checking:</span>
+            {POPULAR_SEARCH_SUGGESTIONS.map((sug) => (
+              <button
+                key={sug}
+                type="button"
+                onClick={() => handleSuggestionClick(sug)}
+                className={`text-[11px] px-2 py-0.5 rounded-lg border font-medium transition-colors cursor-pointer ${
+                  searchTerm === sug
+                    ? "bg-indigo-500/30 text-indigo-300 border-indigo-400/50"
+                    : "bg-white/3 text-slate-400 border-white/8 hover:text-white hover:bg-white/8"
+                }`}
+              >
+                @{sug}
+              </button>
+            ))}
+          </div>
+
+          {/* Dynamic Result Panel */}
+          {searchState === "available" && searchTerm && (
+            <div className="p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/40 flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                    <CheckCircle size={16} />
+                  </div>
+                  <div>
+                    <div className="text-sm font-black text-white">@{searchTerm} is Available!</div>
+                    <div className="text-[10px] text-emerald-300">Ready to claim on Solana</div>
                   </div>
                 </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 uppercase">
+                  Available
+                </span>
+              </div>
 
-                {/* Status message */}
-                {step === "available" && (
-                  <div
-                    style={{
-                      fontSize: 13,
-                      color: "var(--success)",
-                      marginBottom: 12,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                    }}
-                  >
-                    <CheckCircle size={14} /> @{handle} is available!
+              {/* Action depending on wallet state */}
+              {!connected ? (
+                <div className="flex flex-col gap-2 pt-1 border-t border-emerald-500/20">
+                  <p className="text-xs text-slate-300">
+                    Connect your Solana Devnet wallet to register this handle.
+                  </p>
+                  <div className="scale-95 origin-left">
+                    <WalletMultiButton />
                   </div>
-                )}
-                {step === "taken" && (
-                  <div
-                    style={{
-                      fontSize: 13,
-                      color: "var(--danger)",
-                      marginBottom: 12,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                    }}
-                  >
-                    <XCircle size={14} /> @{handle} is already taken
-                  </div>
-                )}
-                {errorMsg && step !== "taken" && (
-                  <div
-                    style={{
-                      fontSize: 13,
-                      color: "var(--danger)",
-                      marginBottom: 12,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                    }}
-                  >
-                    <AlertTriangle size={14} /> {errorMsg}
-                  </div>
-                )}
-
-                {/* Rules */}
-                <div
-                  style={{
-                    fontSize: 12,
-                    color: "var(--text-muted)",
-                    marginBottom: 16,
-                    lineHeight: 1.7,
-                    background: "var(--bg-base)",
-                    borderRadius: 10,
-                    padding: "10px 12px",
-                  }}
-                >
-                  3–32 characters · lowercase letters, numbers, _ and - only
                 </div>
-
-                {/* Register Button */}
+              ) : !myHandle ? (
                 <button
-                  onClick={registerHandle}
-                  disabled={step !== "available" || !handle}
-                  style={{
-                    width: "100%",
-                    padding: "14px",
-                    borderRadius: 12,
-                    border: "none",
-                    background:
-                      step === "available" ? "var(--accent)" : "var(--border)",
-                    color: step === "available" ? "white" : "var(--text-muted)",
-                    fontSize: 16,
-                    fontWeight: 700,
-                    cursor: step === "available" ? "pointer" : "not-allowed",
-                    transition: "all 0.15s",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 8,
-                  }}
+                  onClick={() => registerHandle(searchTerm)}
+                  disabled={registering}
+                  className="w-full py-3.5 rounded-xl bg-linear-to-r from-emerald-500 to-teal-500 hover:brightness-110 active:scale-[0.99] text-slate-950 font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 transition-all cursor-pointer disabled:opacity-50"
                 >
-                  {step === "registering" ? (
+                  {registering ? (
                     <>
-                      <Loader size={16} /> Registering...
+                      <Loader size={16} className="animate-spin" /> Claiming on Solana...
                     </>
                   ) : (
-                    "Register @" + (handle || "handle")
+                    <>
+                      <Sparkles size={16} /> Claim @{searchTerm} for Your Wallet
+                    </>
                   )}
                 </button>
-              </Card>
-            )}
-          </>
-        )}
+              ) : (
+                <div className="p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/30 text-xs text-slate-300 leading-relaxed">
+                  <div className="font-bold text-indigo-300 mb-0.5">Wallet Already Registered</div>
+                  Your current wallet already registered{" "}
+                  <span className="text-white font-bold">@{myHandle}</span>. To register @{searchTerm}
+                  , switch to a different wallet or transfer your existing handle.
+                </div>
+              )}
+            </div>
+          )}
 
-        {/* Success */}
-        {step === "success" && (
-          <Card
-            style={{
-              padding: "24px",
-              textAlign: "center",
-              marginTop: 16,
-              border: "1.5px solid var(--success)",
-            }}
-          >
-            <div
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: 16,
-                background: "var(--success-light)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                margin: "0 auto 12px",
-              }}
-            >
-              <CheckCircle size={28} color="var(--success)" />
+          {searchState === "taken" && searchTerm && (
+            <div className="p-4 rounded-2xl bg-indigo-950/30 border border-indigo-500/40 flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-300 font-bold">
+                    @{searchTerm[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="text-sm font-black text-white">@{searchTerm} is Claimed</div>
+                    <div className="text-[10px] text-slate-400 font-mono">
+                      Owner:{" "}
+                      {searchOwner
+                        ? `${searchOwner.slice(0, 6)}...${searchOwner.slice(-4)}`
+                        : "Registered On-Chain"}
+                    </div>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 uppercase">
+                  Registered
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-1 border-t border-indigo-500/20">
+                <Link
+                  href={`/handle/${searchTerm}`}
+                  className="py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-all text-center shadow-sm"
+                >
+                  <Globe size={13} />
+                  View Public Page
+                </Link>
+                <Link
+                  href={`/send?to=${searchTerm}`}
+                  className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-all text-center shadow-sm"
+                >
+                  <Send size={13} />
+                  Send Payment
+                </Link>
+              </div>
             </div>
-            <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 6 }}>
-              @{myHandle} registered!
+          )}
+
+          {searchState === "reserved" && searchTerm && (
+            <div className="p-4 rounded-2xl bg-amber-950/30 border border-amber-500/40 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                <AlertTriangle size={16} />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-white">@{searchTerm} is Reserved</div>
+                <div className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
+                  This handle is part of the protected DPI governance namespace and cannot be claimed
+                  by individual wallets.
+                </div>
+              </div>
             </div>
-            <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 16 }}>
-              Your handle is now permanently on-chain
+          )}
+
+          {searchError && searchState !== "taken" && searchState !== "available" && (
+            <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
+              <AlertTriangle size={14} className="shrink-0" />
+              <span>{searchError}</span>
             </div>
-            {txSig && (
-              <a
-                href={`https://explorer.solana.com/tx/${txSig}?cluster=devnet`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  fontSize: 12,
-                  color: "var(--accent)",
-                  textDecoration: "none",
-                }}
-              >
-                View on Explorer ↗
-              </a>
-            )}
+          )}
+        </Card>
+
+        {/* Claim First Handle Call-To-Action for Unclaimed Users */}
+        {connected && !myHandle && (
+          <Card className="p-5 border-indigo-500/30 bg-linear-to-br from-indigo-950/40 via-[#13192B] to-[#0F1322]">
+            <div className="flex items-center gap-2 text-indigo-400 font-bold text-sm mb-1">
+              <Sparkles size={16} />
+              <span>You don&apos;t have a registered handle yet</span>
+            </div>
+            <p className="text-xs text-slate-300 leading-relaxed mb-3">
+              Type your desired name in the checker above to check availability and register it
+              permanently to your Solana wallet.
+            </p>
+            <div className="text-[11px] text-slate-400 flex items-center gap-2 bg-white/3 p-2.5 rounded-xl border border-white/6 font-mono">
+              <span>Your Wallet:</span>
+              <span className="text-indigo-300 font-bold">
+                {publicKey
+                  ? `${publicKey.toBase58().slice(0, 8)}...${publicKey.toBase58().slice(-6)}`
+                  : ""}
+              </span>
+            </div>
           </Card>
         )}
 
-        {/* Handle rules info */}
-        <Card style={{ padding: "16px", marginTop: 20 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: "var(--text-secondary)" }}>
-            HANDLE RULES
+        {/* Protocol Rules & Standards */}
+        <Card className="p-4 flex flex-col gap-2.5">
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+            DPI Protocol Guidelines
           </div>
           {[
-            "One wallet can only own one handle",
-            "Handles are permanent and on-chain",
-            "Reserved: admin, support, help, security, dpi, team",
-            "Transfer is possible (frozen handles cannot be transferred)",
-          ].map((rule) => (
-            <div
-              key={rule}
-              style={{
-                fontSize: 13,
-                color: "var(--text-secondary)",
-                padding: "6px 0",
-                borderBottom: "1px solid var(--border-subtle)",
-                display: "flex",
-                gap: 8,
-                alignItems: "flex-start",
-                lineHeight: 1.4,
-              }}
-            >
-              <span style={{ color: "var(--accent)", flexShrink: 0, marginTop: 1 }}>·</span>
-              {rule}
+            "1:1 Identity: Each Solana wallet can claim exactly 1 handle on-chain.",
+            "Character Constraints: 3–32 chars (lowercase letters, numbers, _, -).",
+            "Instant Routing: Anyone can send SOL or SPL tokens directly using @handle.",
+            "Transferable: Owners can transfer handle ownership to another wallet anytime.",
+          ].map((r, i) => (
+            <div key={i} className="text-xs text-slate-300 flex items-start gap-2 leading-relaxed">
+              <span className="text-indigo-400 font-bold">·</span>
+              <span>{r}</span>
             </div>
           ))}
         </Card>
       </div>
+
+      {/* Transfer Handle Modal */}
+      {transferOpen && myHandle && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setTransferOpen(false)}
+        >
+          <div
+            className="relative max-w-sm w-full bg-[#111827] border border-amber-500/30 rounded-3xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setTransferOpen(false)}
+              className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="text-center">
+              <div className="w-10 h-10 mx-auto mb-2 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <ArrowRightLeft size={18} />
+              </div>
+              <h3 className="text-base font-black text-white">Transfer @{myHandle}</h3>
+              <p className="text-xs text-slate-400 mt-1">
+                Transfer ownership to another Solana wallet address. This action cannot be undone.
+              </p>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-slate-300 uppercase block mb-1.5">
+                New Owner Solana Address
+              </label>
+              <input
+                value={newOwnerAddress}
+                onChange={(e) => setNewOwnerAddress(e.target.value)}
+                placeholder="New wallet public key (base58)"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white/4 border border-white/10 text-xs font-mono text-white outline-none focus:border-amber-400/50"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 mt-1">
+              <button
+                onClick={() => setTransferOpen(false)}
+                className="py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-white transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleTransfer}
+                disabled={transferring || !newOwnerAddress}
+                className="py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+              >
+                {transferring ? "Transferring..." : "Confirm Transfer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* QR Code Modal for user's own handle */}
+      {myHandle && (
+        <QRCodeModal
+          isOpen={qrOpen}
+          onClose={() => setQrOpen(false)}
+          title={`@${myHandle}`}
+          subtitle="Scan to view public page or send payment"
+          value={
+            typeof window !== "undefined"
+              ? `${window.location.origin}/handle/${myHandle}`
+              : `https://dpi-app.dev/handle/${myHandle}`
+          }
+          handle={myHandle}
+        />
+      )}
+
+      {/* Registration Stepper Modal */}
+      <TransactionStepperModal
+        isOpen={stepperOpen}
+        stage={stepperStage}
+        txTitle={transferOpen ? "Transferring Handle" : "Registering @Handle"}
+        txSubtitle={
+          transferOpen
+            ? `Transferring @${myHandle} to new owner...`
+            : `Claiming @${searchTerm} on Solana Devnet...`
+        }
+      />
     </div>
   );
 }
