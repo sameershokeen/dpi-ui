@@ -81,7 +81,7 @@ const PREDEFINED_TOKENS = {
 };
 
 function SendPageInner() {
-  const { publicKey, connected, signTransaction } = useWallet();
+  const { publicKey, connected, sendTransaction, signTransaction } = useWallet();
   const { connection } = useConnection();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -375,7 +375,7 @@ function SendPageInner() {
     : `${recipient.slice(0, 8)}...${recipient.slice(-6)}`;
 
   const sendAsset = async () => {
-    if (!publicKey || !signTransaction || !resolvedAddress || !amount) return;
+    if (!publicKey || (!sendTransaction && !signTransaction) || !resolvedAddress || !amount) return;
 
     if (resolvedAddress === publicKey.toBase58()) {
       setErrorMsg("You cannot transfer assets to yourself.");
@@ -469,12 +469,22 @@ function SendPageInner() {
       tx.recentBlockhash = blockhash;
       tx.feePayer = publicKey;
 
-      const signed = await signTransaction(tx);
-      setStepperStage("broadcasting");
+      let sig: string;
+      if (sendTransaction) {
+        setStepperStage("broadcasting");
+        sig = await sendTransaction(tx, connection, {
+          skipPreflight: false,
+        });
+      } else if (signTransaction) {
+        const signed = await signTransaction(tx);
+        setStepperStage("broadcasting");
+        sig = await connection.sendRawTransaction(signed.serialize({ requireAllSignatures: false }), {
+          skipPreflight: false,
+        });
+      } else {
+        throw new Error("Wallet adapter does not support sending transactions.");
+      }
 
-      const sig = await connection.sendRawTransaction(signed.serialize(), {
-        skipPreflight: false,
-      });
       setStepperStage("confirming");
 
       await connection.confirmTransaction(

@@ -51,7 +51,7 @@ type SearchState = "idle" | "checking" | "available" | "taken" | "reserved" | "e
 const POPULAR_SEARCH_SUGGESTIONS = ["solana", "satoshi", "vitalik", "alice", "bob", "pay", "dpi"];
 
 export default function HandlePage() {
-  const { publicKey, connected, signTransaction } = useWallet();
+  const { publicKey, connected, sendTransaction, signTransaction } = useWallet();
   const { connection } = useConnection();
   const router = useRouter();
   const toast = useToast();
@@ -187,7 +187,7 @@ export default function HandlePage() {
 
   // Claim / Register handle
   const registerHandle = async (targetHandle: string) => {
-    if (!publicKey || !signTransaction) {
+    if (!publicKey || (!sendTransaction && !signTransaction)) {
       toast.info("Please connect your Solana wallet first");
       return;
     }
@@ -243,10 +243,18 @@ export default function HandlePage() {
       tx.feePayer = publicKey;
       tx.add(instruction);
 
-      const signed = await signTransaction(tx);
-      setStepperStage("broadcasting");
+      let sig: string;
+      if (sendTransaction) {
+        setStepperStage("broadcasting");
+        sig = await sendTransaction(tx, connection, { skipPreflight: false });
+      } else if (signTransaction) {
+        const signed = await signTransaction(tx);
+        setStepperStage("broadcasting");
+        sig = await connection.sendRawTransaction(signed.serialize({ requireAllSignatures: false }));
+      } else {
+        throw new Error("Wallet adapter does not support sending transactions.");
+      }
 
-      const sig = await connection.sendRawTransaction(signed.serialize());
       setStepperStage("confirming");
 
       await connection.confirmTransaction(
@@ -282,7 +290,7 @@ export default function HandlePage() {
 
   // Transfer Handle logic
   const handleTransfer = async () => {
-    if (!publicKey || !signTransaction || !myHandle || !newOwnerAddress) return;
+    if (!publicKey || (!sendTransaction && !signTransaction) || !myHandle || !newOwnerAddress) return;
 
     let targetPubKey: PublicKey;
     try {
@@ -327,10 +335,18 @@ export default function HandlePage() {
       tx.feePayer = publicKey;
       tx.add(instruction);
 
-      const signed = await signTransaction(tx);
-      setStepperStage("broadcasting");
+      let sig: string;
+      if (sendTransaction) {
+        setStepperStage("broadcasting");
+        sig = await sendTransaction(tx, connection, { skipPreflight: false });
+      } else if (signTransaction) {
+        const signed = await signTransaction(tx);
+        setStepperStage("broadcasting");
+        sig = await connection.sendRawTransaction(signed.serialize({ requireAllSignatures: false }));
+      } else {
+        throw new Error("Wallet adapter does not support sending transactions.");
+      }
 
-      const sig = await connection.sendRawTransaction(signed.serialize());
       setStepperStage("confirming");
 
       await connection.confirmTransaction(
