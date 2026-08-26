@@ -246,21 +246,28 @@ export default function HandlePage() {
       let sig: string;
       if (sendTransaction) {
         setStepperStage("broadcasting");
-        sig = await sendTransaction(tx, connection, { skipPreflight: false });
+        sig = await sendTransaction(tx, connection, { skipPreflight: true, maxRetries: 3 });
       } else if (signTransaction) {
         const signed = await signTransaction(tx);
         setStepperStage("broadcasting");
-        sig = await connection.sendRawTransaction(signed.serialize({ requireAllSignatures: false }));
+        sig = await connection.sendRawTransaction(signed.serialize({ requireAllSignatures: false }), {
+          skipPreflight: true,
+          maxRetries: 3,
+        });
       } else {
         throw new Error("Wallet adapter does not support sending transactions.");
       }
 
       setStepperStage("confirming");
 
-      await connection.confirmTransaction(
+      const confirmation = await connection.confirmTransaction(
         { signature: sig, blockhash, lastValidBlockHeight },
         "confirmed"
       );
+
+      if (confirmation.value.err) {
+        throw new Error(`Transaction failed on-chain: ${JSON.stringify(confirmation.value.err)}`);
+      }
 
       setTxSig(sig);
       setMyHandle(targetHandle);
@@ -338,21 +345,28 @@ export default function HandlePage() {
       let sig: string;
       if (sendTransaction) {
         setStepperStage("broadcasting");
-        sig = await sendTransaction(tx, connection, { skipPreflight: false });
+        sig = await sendTransaction(tx, connection, { skipPreflight: true, maxRetries: 3 });
       } else if (signTransaction) {
         const signed = await signTransaction(tx);
         setStepperStage("broadcasting");
-        sig = await connection.sendRawTransaction(signed.serialize({ requireAllSignatures: false }));
+        sig = await connection.sendRawTransaction(signed.serialize({ requireAllSignatures: false }), {
+          skipPreflight: true,
+          maxRetries: 3,
+        });
       } else {
         throw new Error("Wallet adapter does not support sending transactions.");
       }
 
       setStepperStage("confirming");
 
-      await connection.confirmTransaction(
+      const confirmation = await connection.confirmTransaction(
         { signature: sig, blockhash, lastValidBlockHeight },
         "confirmed"
       );
+
+      if (confirmation.value.err) {
+        throw new Error(`Transaction failed on-chain: ${JSON.stringify(confirmation.value.err)}`);
+      }
 
       invalidateHandleCache(myHandle, publicKey);
       invalidateHandleCache(myHandle, targetPubKey);

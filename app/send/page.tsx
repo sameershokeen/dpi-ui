@@ -473,13 +473,15 @@ function SendPageInner() {
       if (sendTransaction) {
         setStepperStage("broadcasting");
         sig = await sendTransaction(tx, connection, {
-          skipPreflight: false,
+          skipPreflight: true,
+          maxRetries: 3,
         });
       } else if (signTransaction) {
         const signed = await signTransaction(tx);
         setStepperStage("broadcasting");
         sig = await connection.sendRawTransaction(signed.serialize({ requireAllSignatures: false }), {
-          skipPreflight: false,
+          skipPreflight: true,
+          maxRetries: 3,
         });
       } else {
         throw new Error("Wallet adapter does not support sending transactions.");
@@ -487,10 +489,14 @@ function SendPageInner() {
 
       setStepperStage("confirming");
 
-      await connection.confirmTransaction(
+      const confirmation = await connection.confirmTransaction(
         { signature: sig, blockhash, lastValidBlockHeight },
         "confirmed"
       );
+
+      if (confirmation.value.err) {
+        throw new Error(`Transaction failed on-chain: ${JSON.stringify(confirmation.value.err)}`);
+      }
 
       setTxSig(sig);
       setStep("success");
