@@ -44,8 +44,18 @@ export default function TransactionStepperModal({
   const getStepStatus = (stepId: string) => {
     if (stage === "done") return "completed";
     if (stage === stepId) return "active";
-    if (stepId === "signing") return "completed";
-    if (stepId === "broadcasting" && stage === "confirming") return "completed";
+
+    if (stage === "signing") {
+      return "pending";
+    }
+    if (stage === "broadcasting") {
+      if (stepId === "signing") return "completed";
+      return "pending";
+    }
+    if (stage === "confirming") {
+      if (stepId === "signing" || stepId === "broadcasting") return "completed";
+      return "pending";
+    }
     return "pending";
   };
 

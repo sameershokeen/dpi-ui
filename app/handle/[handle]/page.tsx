@@ -3,7 +3,7 @@
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { PublicKey, TransactionInstruction, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
 import Header from "@/components/Header";
 import Card from "@/components/Card";
 import StatusBadge from "@/components/StatusBadge";
@@ -203,22 +203,29 @@ export default function HandlePublicPage() {
         data: discriminator,
       });
 
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
-      const tx = new Transaction();
-      tx.recentBlockhash = blockhash;
-      tx.feePayer = publicKey;
-      tx.add(instruction);
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
+      const messageV0 = new TransactionMessage({
+        payerKey: publicKey,
+        recentBlockhash: blockhash,
+        instructions: [instruction],
+      }).compileToV0Message();
+
+      const versionedTx = new VersionedTransaction(messageV0);
 
       let sig: string;
-      if (sendTransaction) {
+      if (signTransaction) {
+        const signed = await signTransaction(versionedTx as any);
         setStepperStage("broadcasting");
-        sig = await sendTransaction(tx, connection, { skipPreflight: true, maxRetries: 3 });
-      } else if (signTransaction) {
-        const signed = await signTransaction(tx);
-        setStepperStage("broadcasting");
-        sig = await connection.sendRawTransaction(signed.serialize({ requireAllSignatures: false }), {
+        sig = await connection.sendRawTransaction(signed.serialize(), {
           skipPreflight: true,
-          maxRetries: 3,
+          preflightCommitment: "confirmed",
+          maxRetries: 5,
+        });
+      } else if (sendTransaction) {
+        sig = await sendTransaction(versionedTx, connection, {
+          skipPreflight: true,
+          preflightCommitment: "confirmed",
+          maxRetries: 5,
         });
       } else {
         throw new Error("Wallet adapter does not support sending transactions.");
@@ -226,13 +233,25 @@ export default function HandlePublicPage() {
 
       setStepperStage("confirming");
 
-      const confirmation = await connection.confirmTransaction(
-        { signature: sig, blockhash, lastValidBlockHeight },
-        "confirmed"
-      );
+      try {
+        const confirmation = await Promise.race([
+          connection.confirmTransaction(
+            { signature: sig, blockhash, lastValidBlockHeight },
+            "confirmed"
+          ),
+          new Promise<{ value: { err: null } }>((resolve) =>
+            setTimeout(() => resolve({ value: { err: null } }), 20000)
+          ),
+        ]);
 
-      if (confirmation.value.err) {
-        throw new Error(`Transaction failed on-chain: ${JSON.stringify(confirmation.value.err)}`);
+        if (confirmation?.value?.err) {
+          throw new Error(`Transaction failed on-chain: ${JSON.stringify(confirmation.value.err)}`);
+        }
+      } catch (confirmErr: any) {
+        const status = await connection.getSignatureStatus(sig).catch(() => null);
+        if (status?.value?.err) {
+          throw new Error(`Transaction failed on-chain: ${JSON.stringify(status.value.err)}`);
+        }
       }
 
       invalidateHandleCache(data.handle, publicKey);

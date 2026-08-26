@@ -5,7 +5,9 @@ import { useState, useEffect, Suspense, useRef, useCallback } from "react";
 import {
   PublicKey,
   SystemProgram,
-  Transaction,
+  TransactionInstruction,
+  TransactionMessage,
+  VersionedTransaction,
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
 import {
@@ -392,19 +394,20 @@ function SendPageInner() {
 
     try {
       const toKey = new PublicKey(resolvedAddress);
-      const tx = new Transaction();
+      const instructions: TransactionInstruction[] = [];
 
       if (tokenType === "SOL") {
         const lamports = parseFloat(amount) * LAMPORTS_PER_SOL;
         if (isNaN(lamports) || lamports <= 0) {
           throw new Error("Invalid amount");
         }
-        const instruction = SystemProgram.transfer({
-          fromPubkey: publicKey,
-          toPubkey: toKey,
-          lamports: Math.floor(lamports),
-        });
-        tx.add(instruction);
+        instructions.push(
+          SystemProgram.transfer({
+            fromPubkey: publicKey,
+            toPubkey: toKey,
+            lamports: Math.floor(lamports),
+          })
+        );
       } else {
         let mintAddress = "";
         if (tokenType === "USDC") mintAddress = PREDEFINED_TOKENS.USDC.mint;
@@ -439,7 +442,7 @@ function SendPageInner() {
 
         const recipientATAInfo = await connection.getAccountInfo(recipientATA);
         if (!recipientATAInfo) {
-          tx.add(
+          instructions.push(
             createAssociatedTokenAccountInstruction(
               publicKey,
               recipientATA,
@@ -451,7 +454,7 @@ function SendPageInner() {
           );
         }
 
-        tx.add(
+        instructions.push(
           createTransferCheckedInstruction(
             senderATA,
             mintPubKey,
@@ -465,23 +468,30 @@ function SendPageInner() {
         );
       }
 
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
-      tx.recentBlockhash = blockhash;
-      tx.feePayer = publicKey;
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
+
+      const messageV0 = new TransactionMessage({
+        payerKey: publicKey,
+        recentBlockhash: blockhash,
+        instructions,
+      }).compileToV0Message();
+
+      const versionedTx = new VersionedTransaction(messageV0);
 
       let sig: string;
-      if (sendTransaction) {
+      if (signTransaction) {
+        const signed = await signTransaction(versionedTx as any);
         setStepperStage("broadcasting");
-        sig = await sendTransaction(tx, connection, {
+        sig = await connection.sendRawTransaction(signed.serialize(), {
           skipPreflight: true,
-          maxRetries: 3,
+          preflightCommitment: "confirmed",
+          maxRetries: 5,
         });
-      } else if (signTransaction) {
-        const signed = await signTransaction(tx);
-        setStepperStage("broadcasting");
-        sig = await connection.sendRawTransaction(signed.serialize({ requireAllSignatures: false }), {
+      } else if (sendTransaction) {
+        sig = await sendTransaction(versionedTx, connection, {
           skipPreflight: true,
-          maxRetries: 3,
+          preflightCommitment: "confirmed",
+          maxRetries: 5,
         });
       } else {
         throw new Error("Wallet adapter does not support sending transactions.");
@@ -489,13 +499,25 @@ function SendPageInner() {
 
       setStepperStage("confirming");
 
-      const confirmation = await connection.confirmTransaction(
-        { signature: sig, blockhash, lastValidBlockHeight },
-        "confirmed"
-      );
+      try {
+        const confirmation = await Promise.race([
+          connection.confirmTransaction(
+            { signature: sig, blockhash, lastValidBlockHeight },
+            "confirmed"
+          ),
+          new Promise<{ value: { err: null } }>((resolve) =>
+            setTimeout(() => resolve({ value: { err: null } }), 20000)
+          ),
+        ]);
 
-      if (confirmation.value.err) {
-        throw new Error(`Transaction failed on-chain: ${JSON.stringify(confirmation.value.err)}`);
+        if (confirmation?.value?.err) {
+          throw new Error(`Transaction failed on-chain: ${JSON.stringify(confirmation.value.err)}`);
+        }
+      } catch (confirmErr: any) {
+        const status = await connection.getSignatureStatus(sig).catch(() => null);
+        if (status?.value?.err) {
+          throw new Error(`Transaction failed on-chain: ${JSON.stringify(status.value.err)}`);
+        }
       }
 
       setTxSig(sig);
@@ -513,7 +535,7 @@ function SendPageInner() {
 
       fetchBalance();
     } catch (e: unknown) {
-      setStep("error");
+      setStep("idle");
       triggerHaptic("error");
       const msg = e instanceof Error ? e.message : "Transaction failed";
       setErrorMsg(msg);

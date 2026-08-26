@@ -7,6 +7,18 @@ import {
 } from "@solana/wallet-adapter-react";
 import { WalletError } from "@solana/wallet-adapter-base";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
+import {
+  PhantomWalletAdapter,
+  SolflareWalletAdapter,
+  CoinbaseWalletAdapter,
+  TrustWalletAdapter,
+  TorusWalletAdapter,
+  LedgerWalletAdapter,
+  Coin98WalletAdapter,
+  SafePalWalletAdapter,
+  TokenPocketWalletAdapter,
+  BitKeepWalletAdapter,
+} from "@solana/wallet-adapter-wallets";
 import { NetworkProvider, useNetwork } from "@/components/NetworkContext";
 import InboundPaymentListener from "@/components/InboundPaymentListener";
 
@@ -18,7 +30,21 @@ interface Props {
 
 const WalletConnectionInner: FC<Props> = ({ children }) => {
   const { endpoint } = useNetwork();
-  const wallets = useMemo(() => [], []);
+  const wallets = useMemo(
+    () => [
+      new PhantomWalletAdapter(),
+      new SolflareWalletAdapter(),
+      new CoinbaseWalletAdapter(),
+      new TrustWalletAdapter(),
+      new TorusWalletAdapter(),
+      new LedgerWalletAdapter(),
+      new Coin98WalletAdapter(),
+      new SafePalWalletAdapter(),
+      new TokenPocketWalletAdapter(),
+      new BitKeepWalletAdapter(),
+    ],
+    []
+  );
 
   const onError = useCallback((error: WalletError) => {
     if (

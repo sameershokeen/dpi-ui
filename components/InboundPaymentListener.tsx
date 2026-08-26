@@ -11,21 +11,30 @@ export default function InboundPaymentListener() {
   const { connection } = useConnection();
   const toast = useToast();
   const prevBalanceRef = useRef<number | null>(null);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
     if (!connected || !publicKey || !connection) {
       prevBalanceRef.current = null;
+      initializedRef.current = false;
       return;
     }
 
     let isSubscribed = true;
+    initializedRef.current = false;
 
-    // Fetch initial balance
+    // Fetch baseline balance first
     connection
-      .getBalance(publicKey)
+      .getBalance(publicKey, "confirmed")
       .then((b) => {
         if (isSubscribed) {
           prevBalanceRef.current = b;
+          // Mark initialized after small delay so initial socket events don't trigger false alerts
+          setTimeout(() => {
+            if (isSubscribed) {
+              initializedRef.current = true;
+            }
+          }, 1500);
         }
       })
       .catch(() => {});
@@ -38,7 +47,12 @@ export default function InboundPaymentListener() {
         (accountInfo) => {
           if (!isSubscribed) return;
           const newBalance = accountInfo.lamports;
-          if (prevBalanceRef.current !== null && newBalance > prevBalanceRef.current) {
+
+          if (
+            initializedRef.current &&
+            prevBalanceRef.current !== null &&
+            newBalance > prevBalanceRef.current
+          ) {
             const diffLamports = newBalance - prevBalanceRef.current;
             const diffSol = diffLamports / LAMPORTS_PER_SOL;
 
