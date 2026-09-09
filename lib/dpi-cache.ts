@@ -1,5 +1,9 @@
 import { Connection, PublicKey } from "@solana/web3.js";
-import { getHandleRegistryPDA, getReverseLookupPDA } from "./dpi-program";
+import {
+  getHandleRegistryPDA,
+  getReverseLookupPDA,
+  getDpiProgram,
+} from "./dpi-program";
 
 interface CacheEntry<T> {
   data: T;
@@ -24,18 +28,18 @@ export async function lookupHandleCached(
 
   try {
     const [handlePDA] = getHandleRegistryPDA(normalized);
-    const info = await connection.getAccountInfo(handlePDA);
-    if (!info?.data) {
+    const program = getDpiProgram(connection);
+    const acc = await program.account.handleRegistry.fetchNullable(handlePDA);
+
+    if (!acc) {
       handleCache.set(normalized, { data: null, expiry: now + CACHE_TTL_MS });
       return null;
     }
 
-    const d = info.data;
-    const owner = new PublicKey(d.slice(8, 40)).toBase58();
-    const strLen = d.readUInt32LE(40);
-    const frozen = d[44 + strLen + 1] === 1;
-
-    const result = { owner, frozen };
+    const result = {
+      owner: acc.owner.toBase58(),
+      frozen: Boolean(acc.frozen),
+    };
     handleCache.set(normalized, { data: result, expiry: now + CACHE_TTL_MS });
     return result;
   } catch (err) {
@@ -58,16 +62,15 @@ export async function lookupReverseCached(
 
   try {
     const [reversePDA] = getReverseLookupPDA(owner);
-    const info = await connection.getAccountInfo(reversePDA);
-    if (!info?.data) {
+    const program = getDpiProgram(connection);
+    const acc = await program.account.reverseLookup.fetchNullable(reversePDA);
+
+    if (!acc || !acc.handle) {
       reverseCache.set(keyStr, { data: null, expiry: now + CACHE_TTL_MS });
       return null;
     }
 
-    const data = info.data;
-    const strLen = data.readUInt32LE(8 + 32);
-    const handleStr = data.slice(8 + 32 + 4, 8 + 32 + 4 + strLen).toString("utf-8");
-
+    const handleStr = acc.handle;
     reverseCache.set(keyStr, { data: handleStr, expiry: now + CACHE_TTL_MS });
     return handleStr;
   } catch (err) {

@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { WalletMultiButton } from "@/components/WalletButton";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Card from "@/components/Card";
@@ -18,6 +19,7 @@ import {
   Users,
   Zap,
   Shield,
+  ShieldCheck,
   Globe,
   Check,
   Coins,
@@ -30,6 +32,7 @@ import {
   Search,
   ArrowRight,
 } from "lucide-react";
+import { getDpiProgram, checkIsAdmin } from "@/lib/dpi-program";
 
 export default function HomePage() {
   const { publicKey, connected } = useWallet();
@@ -117,11 +120,16 @@ function LandingView() {
           <span>Decentralized Public Infrastructure</span>
         </div>
 
-        {/* Logo mark */}
-        <div className="w-20 h-20 rounded-3xl bg-linear-to-br from-indigo-500 via-purple-600 to-pink-500 flex items-center justify-center mx-auto mb-5 shadow-[0_0_40px_rgba(99,102,241,0.5)] border-2 border-white/30">
-          <span className="text-white text-3xl font-black tracking-tighter">
-            dpi
-          </span>
+        {/* Official DPI Logo mark */}
+        <div className="relative w-24 h-24 rounded-3xl overflow-hidden mx-auto mb-5 shadow-[0_0_50px_rgba(99,102,241,0.45)] border-2 border-indigo-500/40 bg-[#090B10]">
+          <Image
+            src="/dpi-icon-square.png"
+            alt="DPI Protocol"
+            width={96}
+            height={96}
+            className="w-full h-full object-cover"
+            priority
+          />
         </div>
 
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight mb-3">
@@ -279,6 +287,7 @@ function ConnectedView({
 }) {
   const [copied, setCopied] = useState(false);
   const { connection } = useConnection();
+  const [isAdmin, setIsAdmin] = useState(false);
   const [tokens, setTokens] = useState<
     Array<{
       mint: string;
@@ -289,6 +298,27 @@ function ConnectedView({
     }>
   >([]);
   const [loadingAssets, setLoadingAssets] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    async function verifyAdmin() {
+      if (!publicKey || !connection) {
+        setIsAdmin(false);
+        return;
+      }
+      try {
+        const program = getDpiProgram(connection);
+        const adminStatus = await checkIsAdmin(program, publicKey);
+        if (active) setIsAdmin(adminStatus);
+      } catch {
+        if (active) setIsAdmin(false);
+      }
+    }
+    verifyAdmin();
+    return () => {
+      active = false;
+    };
+  }, [publicKey, connection]);
 
   const fetchTokenAssets = useCallback(async () => {
     if (!publicKey || !connection) return;
@@ -453,6 +483,36 @@ function ConnectedView({
         </div>
       </Card>
 
+      {/* Admin Quick-Access Banner (when wallet is admin) */}
+      {isAdmin && (
+        <Card className="p-4 border-purple-500/40 bg-linear-to-r from-purple-950/40 via-[#1a1230] to-indigo-950/40 shadow-lg shadow-purple-500/10">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-purple-300 shrink-0">
+                <ShieldCheck size={20} />
+              </div>
+              <div>
+                <div className="text-sm font-bold text-white flex items-center gap-2">
+                  Protocol Admin Console
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/30 text-purple-300 border border-purple-400/40 font-bold">
+                    Admin
+                  </span>
+                </div>
+                <div className="text-xs text-slate-300">
+                  Moderation, reservations, recovery & governance controls
+                </div>
+              </div>
+            </div>
+            <Link
+              href="/admin"
+              className="text-xs font-bold text-white bg-purple-600 hover:bg-purple-500 active:scale-95 px-3.5 py-2 rounded-xl shadow-md transition-all shrink-0"
+            >
+              Open Console →
+            </Link>
+          </div>
+        </Card>
+      )}
+
       {/* Quick Access Navigation Grid */}
       <div className="grid grid-cols-2 gap-3">
         {[
@@ -466,6 +526,17 @@ function ConnectedView({
             color: "text-amber-400",
             bg: "bg-amber-500/15 border-amber-500/30",
           },
+          ...(isAdmin
+            ? [
+                {
+                  href: "/admin",
+                  icon: ShieldCheck,
+                  label: "Admin Console",
+                  color: "text-purple-400",
+                  bg: "bg-purple-500/15 border-purple-500/30",
+                },
+              ]
+            : []),
           { href: "/community", icon: Users, label: "Community", color: "text-pink-400", bg: "bg-pink-500/15 border-pink-500/30" },
           {
             href: "https://explorer.solana.com/address/CEyRA234cQ3u3KCjE2tRzobZQg7GgyhQBL11JTWA9WVc?cluster=devnet",

@@ -3,7 +3,9 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import SolanaWalletProvider from "@/components/WalletProvider";
 import BottomNav from "@/components/BottomNav";
+import Footer from "@/components/Footer";
 import { ToastProvider } from "@/components/Toast";
+import ProtocolEventListener from "@/components/ProtocolEventListener";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -12,12 +14,44 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://dpi-app.dev"),
   title: "DPI — Solana Decentralized Public Infrastructure",
   description:
     "Privacy like crypto, simplicity like UPI. Decentralized handle registry and instant payments on Solana.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/dpi-icon-square.png", type: "image/png" },
+      { url: "/favicon.ico", type: "image/x-icon" },
+    ],
+    apple: [
+      { url: "/dpi-icon-square.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: "/dpi-icon-square.png",
+  },
+  openGraph: {
+    title: "DPI — Solana Decentralized Public Infrastructure",
+    description:
+      "Privacy like crypto, simplicity like UPI. Decentralized handle registry and instant payments on Solana.",
+    url: "https://dpi-app.dev",
+    siteName: "DPI",
+    images: [
+      {
+        url: "/dpi-icon.png",
+        width: 1536,
+        height: 1024,
+        alt: "DPI — Solana Based UPI",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "DPI — Solana Decentralized Public Infrastructure",
+    description:
+      "Privacy like crypto, simplicity like UPI. Decentralized handle registry and instant payments on Solana.",
+    images: ["/dpi-icon.png"],
   },
 };
 
@@ -58,9 +92,11 @@ export default function RootLayout({
               }}
               className="z-10 shadow-[0_0_50px_rgba(0,0,0,0.8)] border-x border-white/12 bg-[#06080F]/95"
             >
-              <main className="flex-1 w-full pb-24">{children}</main>
+              <main className="flex-1 w-full pb-20">{children}</main>
+              <Footer />
             </div>
             <BottomNav />
+            <ProtocolEventListener />
           </SolanaWalletProvider>
         </ToastProvider>
       </body>

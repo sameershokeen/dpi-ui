@@ -3,7 +3,7 @@
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { PublicKey, TransactionInstruction, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import Header from "@/components/Header";
 import Card from "@/components/Card";
 import StatusBadge from "@/components/StatusBadge";
@@ -11,7 +11,15 @@ import QRCodeModal from "@/components/QRCodeModal";
 import TransactionStepperModal, { StepperStage } from "@/components/TransactionStepperModal";
 import { useToast } from "@/components/Toast";
 import { triggerHaptic } from "@/lib/haptics";
-import { DPI_PROGRAM_ID, getHandleRegistryPDA, getReverseLookupPDA } from "@/lib/dpi-program";
+import {
+  getDpiProgram,
+  transferHandle as transferHandleSDK,
+  freezeHandle,
+  unfreezeHandle,
+  recoverHandle,
+  checkIsAdmin,
+  parseAnchorError,
+} from "@/lib/dpi-program";
 import { lookupHandleCached, invalidateHandleCache } from "@/lib/dpi-cache";
 import {
   Send,
@@ -27,8 +35,12 @@ import {
   Edit3,
   ArrowRightLeft,
   Shield,
+  ShieldAlert,
+  ShieldCheck,
+  Lock,
+  Unlock,
+  RotateCcw,
   X,
-  Code2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -50,7 +62,8 @@ export default function HandlePublicPage() {
   const params = useParams();
   const router = useRouter();
   const { connection } = useConnection();
-  const { publicKey, sendTransaction, signTransaction } = useWallet();
+  const wallet = useWallet();
+  const { publicKey } = wallet;
   const toast = useToast();
 
   const rawHandle = (params?.handle as string) || "";
@@ -62,6 +75,14 @@ export default function HandlePublicPage() {
   const [copied, setCopied] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
+
+  // Admin moderation state
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminActionLoading, setAdminActionLoading] = useState(false);
+  const [recoverModalOpen, setRecoverModalOpen] = useState(false);
+  const [recoverNewOwner, setRecoverNewOwner] = useState("");
+  const [stepperTitle, setStepperTitle] = useState("Transferring Handle");
+  const [stepperSubtitle, setStepperSubtitle] = useState("");
 
   // Social Bio state
   const [bioData, setBioData] = useState<SocialBio>({});
@@ -76,6 +97,27 @@ export default function HandlePublicPage() {
   const [stepperStage, setStepperStage] = useState<StepperStage>("signing");
 
   const isOwner = publicKey && data?.owner && publicKey.toBase58() === data.owner;
+
+  useEffect(() => {
+    let active = true;
+    async function verifyAdmin() {
+      if (!publicKey || !connection) {
+        setIsAdmin(false);
+        return;
+      }
+      try {
+        const program = getDpiProgram(connection);
+        const adminStatus = await checkIsAdmin(program, publicKey);
+        if (active) setIsAdmin(adminStatus);
+      } catch {
+        if (active) setIsAdmin(false);
+      }
+    }
+    verifyAdmin();
+    return () => {
+      active = false;
+    };
+  }, [publicKey, connection]);
 
   const fetchHandleData = useCallback(async () => {
     if (!handle) return;
@@ -163,7 +205,7 @@ export default function HandlePublicPage() {
   };
 
   const handleTransferHandle = async () => {
-    if (!publicKey || (!sendTransaction && !signTransaction) || !data || !newOwnerAddress) return;
+    if (!publicKey || !data || !newOwnerAddress) return;
 
     let targetPubKey: PublicKey;
     try {
@@ -179,80 +221,18 @@ export default function HandlePublicPage() {
     }
 
     setTransferring(true);
+    setStepperTitle("Transferring Handle");
+    setStepperSubtitle(`Transferring @${data.handle} to new owner...`);
     setStepperStage("signing");
     setStepperOpen(true);
     triggerHaptic("selection");
 
     try {
-      const [handlePDA] = getHandleRegistryPDA(data.handle);
-      const [currentReversePDA] = getReverseLookupPDA(publicKey);
-      const [newReversePDA] = getReverseLookupPDA(targetPubKey);
-
-      // Discriminator for transfer_handle (sha256("global:transfer_handle")[0..8])
-      const discriminator = Buffer.from([0x26, 0x14, 0x16, 0x76, 0x6e, 0x05, 0x88, 0x6f]);
-
-      const instruction = new TransactionInstruction({
-        programId: DPI_PROGRAM_ID,
-        keys: [
-          { pubkey: publicKey, isSigner: true, isWritable: false },
-          { pubkey: handlePDA, isSigner: false, isWritable: true },
-          { pubkey: currentReversePDA, isSigner: false, isWritable: true },
-          { pubkey: newReversePDA, isSigner: false, isWritable: true },
-          { pubkey: targetPubKey, isSigner: false, isWritable: false },
-        ],
-        data: discriminator,
-      });
-
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
-      const messageV0 = new TransactionMessage({
-        payerKey: publicKey,
-        recentBlockhash: blockhash,
-        instructions: [instruction],
-      }).compileToV0Message();
-
-      const versionedTx = new VersionedTransaction(messageV0);
-
-      let sig: string;
-      if (signTransaction) {
-        const signed = await signTransaction(versionedTx as any);
-        setStepperStage("broadcasting");
-        sig = await connection.sendRawTransaction(signed.serialize(), {
-          skipPreflight: true,
-          preflightCommitment: "confirmed",
-          maxRetries: 5,
-        });
-      } else if (sendTransaction) {
-        sig = await sendTransaction(versionedTx, connection, {
-          skipPreflight: true,
-          preflightCommitment: "confirmed",
-          maxRetries: 5,
-        });
-      } else {
-        throw new Error("Wallet adapter does not support sending transactions.");
-      }
-
+      const program = getDpiProgram(connection, wallet);
+      setStepperStage("broadcasting");
+      const tx = await transferHandleSDK(program, wallet, data.handle, targetPubKey);
       setStepperStage("confirming");
-
-      try {
-        const confirmation = await Promise.race([
-          connection.confirmTransaction(
-            { signature: sig, blockhash, lastValidBlockHeight },
-            "confirmed"
-          ),
-          new Promise<{ value: { err: null } }>((resolve) =>
-            setTimeout(() => resolve({ value: { err: null } }), 20000)
-          ),
-        ]);
-
-        if (confirmation?.value?.err) {
-          throw new Error(`Transaction failed on-chain: ${JSON.stringify(confirmation.value.err)}`);
-        }
-      } catch (confirmErr: any) {
-        const status = await connection.getSignatureStatus(sig).catch(() => null);
-        if (status?.value?.err) {
-          throw new Error(`Transaction failed on-chain: ${JSON.stringify(status.value.err)}`);
-        }
-      }
+      await connection.confirmTransaction(tx, "confirmed");
 
       invalidateHandleCache(data.handle, publicKey);
       invalidateHandleCache(data.handle, targetPubKey);
@@ -264,10 +244,109 @@ export default function HandlePublicPage() {
       fetchHandleData();
     } catch (err: any) {
       triggerHaptic("error");
-      toast.error(err.message || "Failed to transfer handle", "Transfer Error");
+      toast.error(parseAnchorError(err), "Transfer Error");
+      setStepperOpen(false);
     } finally {
       setTransferring(false);
+      setTimeout(() => setStepperOpen(false), 1500);
+    }
+  };
+
+  const handleAdminFreeze = async () => {
+    if (!publicKey || !data) return;
+    setAdminActionLoading(true);
+    setStepperTitle("Freezing Handle");
+    setStepperSubtitle(`Freezing transfers on @${data.handle}...`);
+    setStepperStage("signing");
+    setStepperOpen(true);
+    triggerHaptic("selection");
+
+    try {
+      const program = getDpiProgram(connection, wallet);
+      setStepperStage("broadcasting");
+      const tx = await freezeHandle(program, wallet, data.handle);
+      setStepperStage("confirming");
+      await connection.confirmTransaction(tx, "confirmed");
+      setStepperStage("done");
+      toast.success(`@${data.handle} is now FROZEN.`);
+      triggerHaptic("success");
+      setData((prev) => (prev ? { ...prev, frozen: true } : null));
+      invalidateHandleCache(data.handle, new PublicKey(data.owner));
+    } catch (err: any) {
       setStepperOpen(false);
+      toast.error(parseAnchorError(err));
+    } finally {
+      setAdminActionLoading(false);
+      setTimeout(() => setStepperOpen(false), 1500);
+    }
+  };
+
+  const handleAdminUnfreeze = async () => {
+    if (!publicKey || !data) return;
+    setAdminActionLoading(true);
+    setStepperTitle("Unfreezing Handle");
+    setStepperSubtitle(`Re-enabling transfers on @${data.handle}...`);
+    setStepperStage("signing");
+    setStepperOpen(true);
+    triggerHaptic("selection");
+
+    try {
+      const program = getDpiProgram(connection, wallet);
+      setStepperStage("broadcasting");
+      const tx = await unfreezeHandle(program, wallet, data.handle);
+      setStepperStage("confirming");
+      await connection.confirmTransaction(tx, "confirmed");
+      setStepperStage("done");
+      toast.success(`@${data.handle} is now ACTIVE.`);
+      triggerHaptic("success");
+      setData((prev) => (prev ? { ...prev, frozen: false } : null));
+      invalidateHandleCache(data.handle, new PublicKey(data.owner));
+    } catch (err: any) {
+      setStepperOpen(false);
+      toast.error(parseAnchorError(err));
+    } finally {
+      setAdminActionLoading(false);
+      setTimeout(() => setStepperOpen(false), 1500);
+    }
+  };
+
+  const handleAdminRecover = async () => {
+    if (!publicKey || !data || !recoverNewOwner.trim()) return;
+    let targetPubkey: PublicKey;
+    try {
+      targetPubkey = new PublicKey(recoverNewOwner.trim());
+    } catch {
+      toast.error("Invalid Solana address for new owner");
+      return;
+    }
+
+    setAdminActionLoading(true);
+    setStepperTitle("Recovering Handle");
+    setStepperSubtitle(`Reassigning @${data.handle} to new owner...`);
+    setStepperStage("signing");
+    setStepperOpen(true);
+    triggerHaptic("selection");
+
+    try {
+      const program = getDpiProgram(connection, wallet);
+      setStepperStage("broadcasting");
+      const tx = await recoverHandle(program, wallet, data.handle, targetPubkey);
+      setStepperStage("confirming");
+      await connection.confirmTransaction(tx, "confirmed");
+      setStepperStage("done");
+      toast.success(`@${data.handle} successfully recovered!`);
+      triggerHaptic("success");
+      setRecoverModalOpen(false);
+      setRecoverNewOwner("");
+      invalidateHandleCache(data.handle, new PublicKey(data.owner));
+      invalidateHandleCache(data.handle, targetPubkey);
+      fetchHandleData();
+    } catch (err: any) {
+      setStepperOpen(false);
+      toast.error(parseAnchorError(err));
+    } finally {
+      setAdminActionLoading(false);
+      setTimeout(() => setStepperOpen(false), 1500);
     }
   };
 
@@ -524,6 +603,58 @@ export default function HandlePublicPage() {
               </Card>
             )}
 
+            {/* Admin Moderation Controls */}
+            {isAdmin && (
+              <Card className="p-4 flex flex-col gap-3 border-purple-500/40 bg-linear-to-br from-purple-950/30 to-indigo-950/30 shadow-lg shadow-purple-500/10">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-bold text-purple-300">
+                    <ShieldCheck size={15} />
+                    <span>Admin Moderation Controls</span>
+                  </div>
+                  <Link
+                    href={`/admin?tab=moderation&handle=${data.handle}`}
+                    className="text-[11px] font-semibold text-purple-400 hover:text-purple-300 flex items-center gap-1"
+                  >
+                    Open Console ↗
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  {data.frozen ? (
+                    <button
+                      onClick={handleAdminUnfreeze}
+                      disabled={adminActionLoading}
+                      className="py-2.5 px-3 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      <Unlock size={14} />
+                      Unfreeze Handle
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleAdminFreeze}
+                      disabled={adminActionLoading}
+                      className="py-2.5 px-3 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/40 text-rose-300 text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      <Lock size={14} />
+                      Freeze Handle
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      triggerHaptic("tap");
+                      setRecoverModalOpen(true);
+                    }}
+                    disabled={adminActionLoading}
+                    className="py-2.5 px-3 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/40 text-purple-200 text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    <RotateCcw size={14} />
+                    Recover Handle
+                  </button>
+                </div>
+              </Card>
+            )}
+
             {/* On-Chain Record Info */}
             <Card className="p-4 flex flex-col gap-3">
               <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -626,12 +757,70 @@ export default function HandlePublicPage() {
         </div>
       )}
 
+      {/* Admin Recover Handle Modal */}
+      {recoverModalOpen && data && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setRecoverModalOpen(false)}
+        >
+          <div
+            className="relative max-w-sm w-full bg-[#111827] border border-purple-500/30 rounded-3xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setRecoverModalOpen(false)}
+              className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="text-center">
+              <div className="w-10 h-10 mx-auto mb-2 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300">
+                <RotateCcw size={18} />
+              </div>
+              <h3 className="text-base font-black text-white">Recover @{data.handle}</h3>
+              <p className="text-xs text-slate-400 mt-1">
+                Admin emergency recovery. This reassigns ownership of this handle and its reverse lookup to the specified wallet.
+              </p>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-slate-300 uppercase block mb-1.5">
+                New Target Owner Address
+              </label>
+              <input
+                value={recoverNewOwner}
+                onChange={(e) => setRecoverNewOwner(e.target.value)}
+                placeholder="Recipient wallet public key (base58)"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white/4 border border-white/10 text-xs font-mono text-white outline-none focus:border-purple-400/50"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 mt-1">
+              <button
+                onClick={() => setRecoverModalOpen(false)}
+                className="py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-white transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAdminRecover}
+                disabled={adminActionLoading || !recoverNewOwner.trim()}
+                className="py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-black active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+              >
+                {adminActionLoading ? "Recovering..." : "Confirm Recovery"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stepper modal */}
       <TransactionStepperModal
         isOpen={stepperOpen}
         stage={stepperStage}
-        txTitle="Transferring Handle"
-        txSubtitle={`Transferring @${handle} to new owner...`}
+        txTitle={stepperTitle}
+        txSubtitle={stepperSubtitle}
       />
     </div>
   );

@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@/components/WalletButton";
-import { ChevronLeft, Globe } from "lucide-react";
+import { ChevronLeft, Globe, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
 import { useNetwork, CLUSTER_CONFIG } from "@/components/NetworkContext";
 import NetworkSwitcherModal from "@/components/NetworkSwitcherModal";
 import { triggerHaptic } from "@/lib/haptics";
+import { getDpiProgram, checkIsAdmin } from "@/lib/dpi-program";
 
 interface HeaderProps {
   title?: string;
@@ -21,8 +25,34 @@ export default function Header({
   rightElement,
 }: HeaderProps) {
   const { network } = useNetwork();
+  const { connection } = useConnection();
+  const { publicKey } = useWallet();
   const [networkModalOpen, setNetworkModalOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const currentConfig = CLUSTER_CONFIG[network] || CLUSTER_CONFIG.devnet;
+
+  useEffect(() => {
+    let active = true;
+    async function checkAdminStatus() {
+      if (!publicKey || !connection) {
+        setIsAdmin(false);
+        return;
+      }
+      try {
+        const program = getDpiProgram(connection);
+        const adminStatus = await checkIsAdmin(program, publicKey);
+        if (active) {
+          setIsAdmin(adminStatus);
+        }
+      } catch {
+        if (active) setIsAdmin(false);
+      }
+    }
+    checkAdminStatus();
+    return () => {
+      active = false;
+    };
+  }, [publicKey, connection]);
 
   return (
     <>
@@ -42,12 +72,17 @@ export default function Header({
               {title}
             </h1>
           ) : (
-            <div className="flex items-center gap-2.5">
-              {/* DPI Logo Mark */}
-              <div className="w-8 h-8 rounded-xl bg-linear-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-                <span className="text-white text-xs font-black tracking-tight">
-                  dpi
-                </span>
+            <Link href="/" className="flex items-center gap-2.5 group">
+              {/* Official DPI Logo Mark */}
+              <div className="relative w-8 h-8 rounded-xl overflow-hidden shadow-lg shadow-indigo-500/25 group-hover:scale-105 border border-indigo-500/30 transition-transform bg-[#090B10] shrink-0">
+                <Image
+                  src="/dpi-icon-square.png"
+                  alt="DPI"
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-cover"
+                  priority
+                />
               </div>
               <div>
                 <div className="text-sm font-extrabold text-white leading-none tracking-tight">
@@ -55,7 +90,9 @@ export default function Header({
                 </div>
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     triggerHaptic("tap");
                     setNetworkModalOpen(true);
                   }}
@@ -65,11 +102,24 @@ export default function Header({
                   <span>{currentConfig.label}</span>
                 </button>
               </div>
-            </div>
+            </Link>
           )}
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Admin Badge */}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              onClick={() => triggerHaptic("tap")}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/40 text-[11px] font-bold text-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.3)] transition-all animate-pulse"
+              title="DPI Protocol Admin Console"
+            >
+              <ShieldCheck size={13} className="text-purple-300" />
+              <span>Admin</span>
+            </Link>
+          )}
+
           {title && (
             <button
               type="button"
@@ -83,7 +133,9 @@ export default function Header({
               <Globe size={15} />
             </button>
           )}
+
           {rightElement}
+
           <div className="scale-90 origin-right">
             <WalletMultiButton />
           </div>
@@ -97,4 +149,3 @@ export default function Header({
     </>
   );
 }
-

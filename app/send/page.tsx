@@ -302,6 +302,10 @@ function SendPageInner() {
           setResolveError(`@${handle} not registered`);
           return;
         }
+        if (handleInfo.frozen) {
+          setResolveError(`Handle @${handle} is FROZEN by administrators. Payments are disabled.`);
+          return;
+        }
         const owner = handleInfo.owner;
         if (publicKey && owner === publicKey.toBase58()) {
           setResolveError("You cannot send assets to your own handle");
@@ -393,6 +397,14 @@ function SendPageInner() {
     triggerHaptic("selection");
 
     try {
+      if (isHandle) {
+        const cleanHandle = recipient.replace(/^@/, "").toLowerCase().trim();
+        const handleInfo = await lookupHandleCached(connection, cleanHandle);
+        if (handleInfo?.frozen) {
+          throw new Error(`Handle @${cleanHandle} is FROZEN by administrators. Payments are disabled.`);
+        }
+      }
+
       const toKey = new PublicKey(resolvedAddress);
       const instructions: TransactionInstruction[] = [];
 

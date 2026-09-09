@@ -1,0 +1,996 @@
+{
+  "address": "CEyRA234cQ3u3KCjE2tRzobZQg7GgyhQBL11JTWA9WVc",
+  "metadata": {
+    "name": "dpi_registry",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "batch_reserve_handles",
+      "discriminator": [
+        223,
+        204,
+        240,
+        153,
+        226,
+        161,
+        98,
+        192
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "handles",
+          "type": {
+            "vec": "string"
+          }
+        }
+      ]
+    },
+    {
+      "name": "freeze_handle",
+      "discriminator": [
+        126,
+        186,
+        34,
+        174,
+        237,
+        149,
+        231,
+        159
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "handle_registry",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "init_config",
+      "discriminator": [
+        23,
+        235,
+        115,
+        232,
+        168,
+        96,
+        1,
+        231
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "recover_handle",
+      "discriminator": [
+        71,
+        139,
+        99,
+        85,
+        249,
+        87,
+        229,
+        243
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "handle_registry",
+          "writable": true
+        },
+        {
+          "name": "old_reverse_lookup",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  118,
+                  101,
+                  114,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "handle_registry.owner",
+                "account": "HandleRegistry"
+              }
+            ]
+          }
+        },
+        {
+          "name": "new_reverse_lookup",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  118,
+                  101,
+                  114,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "new_owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "new_owner",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "register_handle",
+      "discriminator": [
+        15,
+        173,
+        21,
+        158,
+        125,
+        204,
+        221,
+        29
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "handle_registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  104,
+                  97,
+                  110,
+                  100,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "handle"
+              }
+            ]
+          }
+        },
+        {
+          "name": "reverse_lookup",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  118,
+                  101,
+                  114,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserved_handle",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101,
+                  100
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "handle"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "handle",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "reserve_handle",
+      "discriminator": [
+        207,
+        57,
+        189,
+        58,
+        44,
+        182,
+        144,
+        13
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserved_handle",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101,
+                  100
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "handle"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "handle",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "transfer_handle",
+      "discriminator": [
+        205,
+        82,
+        18,
+        134,
+        165,
+        126,
+        5,
+        18
+      ],
+      "accounts": [
+        {
+          "name": "current_owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "handle_registry",
+          "writable": true
+        },
+        {
+          "name": "owner",
+          "relations": [
+            "handle_registry"
+          ]
+        },
+        {
+          "name": "old_reverse_lookup",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  118,
+                  101,
+                  114,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "current_owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "new_reverse_lookup",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  118,
+                  101,
+                  114,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "new_owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "new_owner"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "unfreeze_handle",
+      "discriminator": [
+        184,
+        67,
+        141,
+        90,
+        193,
+        164,
+        11,
+        129
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "handle_registry",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_config",
+      "discriminator": [
+        29,
+        158,
+        252,
+        191,
+        10,
+        83,
+        219,
+        99
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "new_admin"
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "HandleRegistry",
+      "discriminator": [
+        120,
+        46,
+        76,
+        126,
+        63,
+        168,
+        217,
+        232
+      ]
+    },
+    {
+      "name": "RegistryConfig",
+      "discriminator": [
+        23,
+        118,
+        10,
+        246,
+        173,
+        231,
+        243,
+        156
+      ]
+    },
+    {
+      "name": "ReservedHandle",
+      "discriminator": [
+        56,
+        73,
+        168,
+        21,
+        191,
+        136,
+        222,
+        232
+      ]
+    },
+    {
+      "name": "ReverseLookup",
+      "discriminator": [
+        229,
+        71,
+        23,
+        218,
+        108,
+        105,
+        141,
+        76
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "ConfigUpdated",
+      "discriminator": [
+        40,
+        241,
+        230,
+        122,
+        11,
+        19,
+        198,
+        194
+      ]
+    },
+    {
+      "name": "HandleFrozen",
+      "discriminator": [
+        113,
+        106,
+        8,
+        145,
+        201,
+        35,
+        41,
+        246
+      ]
+    },
+    {
+      "name": "HandleRecovered",
+      "discriminator": [
+        36,
+        198,
+        238,
+        198,
+        93,
+        61,
+        147,
+        169
+      ]
+    },
+    {
+      "name": "HandleRegistered",
+      "discriminator": [
+        198,
+        199,
+        131,
+        143,
+        155,
+        179,
+        118,
+        191
+      ]
+    },
+    {
+      "name": "HandleReserved",
+      "discriminator": [
+        114,
+        156,
+        154,
+        250,
+        233,
+        155,
+        30,
+        30
+      ]
+    },
+    {
+      "name": "HandleTransferred",
+      "discriminator": [
+        60,
+        54,
+        173,
+        179,
+        246,
+        184,
+        172,
+        39
+      ]
+    },
+    {
+      "name": "HandleUnfrozen",
+      "discriminator": [
+        113,
+        20,
+        201,
+        192,
+        199,
+        118,
+        99,
+        59
+      ]
+    },
+    {
+      "name": "ReverseLookupCreated",
+      "discriminator": [
+        219,
+        47,
+        36,
+        35,
+        151,
+        176,
+        179,
+        126
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "HandleTooShort",
+      "msg": "Handle too short"
+    },
+    {
+      "code": 6001,
+      "name": "HandleTooLong",
+      "msg": "Handle too long"
+    },
+    {
+      "code": 6002,
+      "name": "ReservedHandle",
+      "msg": "Reserved handle"
+    },
+    {
+      "code": 6003,
+      "name": "UnauthorizedAdmin",
+      "msg": "Unauthorized admin"
+    },
+    {
+      "code": 6004,
+      "name": "Unauthorized",
+      "msg": "Unauthorized"
+    },
+    {
+      "code": 6005,
+      "name": "HandleFrozen",
+      "msg": "Handle is frozen"
+    },
+    {
+      "code": 6006,
+      "name": "HandleAlreadyReserved",
+      "msg": "Handle already reserved"
+    },
+    {
+      "code": 6007,
+      "name": "HandleNotFound",
+      "msg": "Handle not found"
+    },
+    {
+      "code": 6008,
+      "name": "TooManyHandles",
+      "msg": "Too many handles"
+    },
+    {
+      "code": 6009,
+      "name": "InvalidHandle",
+      "msg": "Invalid handle"
+    },
+    {
+      "code": 6010,
+      "name": "HandleAlreadyOwned",
+      "msg": "Wallet already owns a handle"
+    }
+  ],
+  "types": [
+    {
+      "name": "ConfigUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "old_admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "new_admin",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "HandleFrozen",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "handle",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "HandleRecovered",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "handle",
+            "type": "string"
+          },
+          {
+            "name": "new_owner",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "HandleRegistered",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "handle",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "HandleRegistry",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "handle",
+            "type": "string"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "frozen",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "HandleReserved",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "handle",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "HandleTransferred",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "old_owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "new_owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "handle",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "HandleUnfrozen",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "handle",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RegistryConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ReservedHandle",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "handle",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ReverseLookup",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "handle",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ReverseLookupCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "handle",
+            "type": "string"
+          }
+        ]
+      }
+    }
+  ]
+}

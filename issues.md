@@ -108,3 +108,56 @@
   - Standardized opacity classes (`bg-white/4`, `border-white/12`, `divide-white/6`, `border-white/16`, `border-white/28`, etc.) and sizing tokens (`max-w-120`, `min-w-30`).
   - Zero TypeScript errors, zero ESLint warnings, and verified production build via `npm run build`.
 
+---
+
+## 🔴 7. Protocol Implementation & `frontend.md` Alignment Issues — [RESOLVED ✅]
+
+### 7.1 Missing Anchor TypeScript Types (`types/dpi_registry.ts`)
+* **Severity:** High
+* **Location:** [`types/dpi_registry.ts`](file:///Users/arbab/Desktop/sameer/dpi-app/types/dpi_registry.ts), [`lib/dpi-program.ts`](file:///Users/arbab/Desktop/sameer/dpi-app/lib/dpi-program.ts)
+* **Status:** **FIXED ✅**
+* **Verification:** Copied generated Anchor types from `../dpi/contract/target/types/dpi_registry.ts` into `dpi-app/types/dpi_registry.ts`. All methods in `lib/dpi-program.ts` are strictly typed with `Program<DpiRegistry>`.
+
+### 7.2 Safety Check Missing: Payments to Frozen Handles Allowed in `/send`
+* **Severity:** Critical
+* **Location:** [`app/send/page.tsx`](file:///Users/arbab/Desktop/sameer/dpi-app/app/send/page.tsx)
+* **Status:** **FIXED ✅**
+* **Verification:** Added check in `resolveRecipient` and pre-flight check in `sendAsset`. If a handle is frozen by administrators, payment is blocked with: *"Handle @{handle} is FROZEN by administrators. Payments are disabled."*
+
+### 7.3 Missing Handle Transfer Action on User Profile (`/profile`)
+* **Severity:** High
+* **Location:** [`app/profile/page.tsx`](file:///Users/arbab/Desktop/sameer/dpi-app/app/profile/page.tsx)
+* **Status:** **FIXED ✅**
+* **Verification:** Implemented "Transfer Handle Ownership" action and modal on `/profile`. Calls `transferHandle` instruction, updating reverse lookup PDAs and handling frozen checks and wallet signature steppers.
+
+### 7.4 `/community` Missing On-Chain Handle Directory Listing
+* **Severity:** Medium
+* **Location:** [`app/community/page.tsx`](file:///Users/arbab/Desktop/sameer/dpi-app/app/community/page.tsx)
+* **Status:** **FIXED ✅**
+* **Verification:** Implemented on-chain directory querying `program.account.handleRegistry.all()`. Features real-time search, filters (All / Active / Frozen), metric counters, copy address, and direct routing to `/send?to=@{handle}`.
+
+### 7.5 `/history` Missing Protocol-Wide Activity Feed
+* **Severity:** Medium
+* **Location:** [`app/history/page.tsx`](file:///Users/arbab/Desktop/sameer/dpi-app/app/history/page.tsx)
+* **Status:** **FIXED ✅**
+* **Verification:** Added dual-tab switcher: "My Wallet" and "Protocol Explorer". Fetches live transactions on `PROGRAM_ID` via `fetchRecentProtocolActivity`, rendering slot numbers, timestamps, explorer links, and signature copiers.
+
+### 7.6 Missing Real-Time On-Chain Program Event Subscriptions
+* **Severity:** Medium
+* **Location:** [`lib/dpi-program.ts`](file:///Users/arbab/Desktop/sameer/dpi-app/lib/dpi-program.ts), [`components/ProtocolEventListener.tsx`](file:///Users/arbab/Desktop/sameer/dpi-app/components/ProtocolEventListener.tsx)
+* **Status:** **FIXED ✅**
+* **Verification:** Created and mounted `<ProtocolEventListener />` in `app/layout.tsx`. Subscribes to program WebSocket events (`handleRegistered`, `handleTransferred`, `handleFrozen`, `handleUnfrozen`, `handleReserved`, `handleRecovered`, `configUpdated`) and displays real-time toast alerts.
+
+### 7.7 Helper Functions and Aliases Alignment in `lib/dpi-program.ts`
+* **Severity:** Medium
+* **Location:** [`lib/dpi-program.ts`](file:///Users/arbab/Desktop/sameer/dpi-app/lib/dpi-program.ts)
+* **Status:** **FIXED ✅**
+* **Verification:** Exported all exact recipes and aliases from `frontend.md` (`deriveConfigPda`, `deriveHandlePda`, `deriveReverseLookupPda`, `deriveReservedHandlePda`, `validateHandle`, `normalizeHandle`, `fetchAllRegisteredHandles`, `fetchRecentProtocolActivity`, `adminFreezeHandle`, `adminUnfreezeHandle`, `adminReserveHandle`, `adminBatchReserve`, `adminRecoverHandle`, `adminUpdateConfig`).
+
+### 7.8 Fragile Manual Byte Offset Slicing in `lib/dpi-cache.ts`
+* **Severity:** Low
+* **Location:** [`lib/dpi-cache.ts`](file:///Users/arbab/Desktop/sameer/dpi-app/lib/dpi-cache.ts)
+* **Status:** **FIXED ✅**
+* **Verification:** Refactored `lookupHandleCached` and `lookupReverseCached` to decode via Anchor's `program.account.handleRegistry.fetchNullable` and `reverseLookup.fetchNullable`, eliminating manual buffer index calculations.
+
+

@@ -1,9 +1,9 @@
 "use client";
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
-import { CheckCircle2, AlertCircle, Info, X } from "lucide-react";
+import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from "lucide-react";
 
-export type ToastType = "success" | "error" | "info";
+export type ToastType = "success" | "error" | "info" | "warning";
 
 export interface ToastMessage {
   id: string;
@@ -18,6 +18,7 @@ interface ToastContextType {
     success: (message: string, title?: string, duration?: number) => void;
     error: (message: string, title?: string, duration?: number) => void;
     info: (message: string, title?: string, duration?: number) => void;
+    warning: (message: string, title?: string, duration?: number) => void;
   };
 }
 
@@ -53,6 +54,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       addToast("error", message, title, duration),
     info: (message: string, title?: string, duration?: number) =>
       addToast("info", message, title, duration),
+    warning: (message: string, title?: string, duration?: number) =>
+      addToast("warning", message, title, duration),
   };
 
   return (
@@ -69,12 +72,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 ? "bg-[#0c1a14]/90 border-emerald-500/30 text-white"
                 : t.type === "error"
                 ? "bg-[#1c0d12]/90 border-rose-500/30 text-white"
+                : t.type === "warning"
+                ? "bg-[#1f1606]/90 border-amber-500/30 text-white"
                 : "bg-[#0f172a]/90 border-indigo-500/30 text-white"
             }`}
           >
             <div className="mt-0.5 shrink-0">
               {t.type === "success" && <CheckCircle2 size={18} className="text-emerald-400" />}
               {t.type === "error" && <AlertCircle size={18} className="text-rose-400" />}
+              {t.type === "warning" && <AlertTriangle size={18} className="text-amber-400" />}
               {t.type === "info" && <Info size={18} className="text-indigo-400" />}
             </div>
 
@@ -109,6 +115,7 @@ export function useToast() {
       success: (msg: string, title?: string) => console.log("[Toast Success]", title, msg),
       error: (msg: string, title?: string) => console.error("[Toast Error]", title, msg),
       info: (msg: string, title?: string) => console.log("[Toast Info]", title, msg),
+      warning: (msg: string, title?: string) => console.warn("[Toast Warning]", title, msg),
     };
   }
   return context.toast;

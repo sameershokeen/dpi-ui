@@ -2,13 +2,7 @@
 
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { useState, useEffect, useCallback, useRef } from "react";
-import {
-  SystemProgram,
-  TransactionInstruction,
-  TransactionMessage,
-  VersionedTransaction,
-  PublicKey,
-} from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import Header from "@/components/Header";
 import Card from "@/components/Card";
 import StatusBadge from "@/components/StatusBadge";
@@ -18,10 +12,11 @@ import { WalletMultiButton } from "@/components/WalletButton";
 import { useToast } from "@/components/Toast";
 import { triggerHaptic } from "@/lib/haptics";
 import {
-  DPI_PROGRAM_ID,
-  getHandleRegistryPDA,
-  getReverseLookupPDA,
-  getReservedHandlePDA,
+  getDpiProgram,
+  registerHandle as registerHandleSDK,
+  transferHandle as transferHandleSDK,
+  checkHandleAvailability,
+  parseAnchorError,
   validateHandle,
 } from "@/lib/dpi-program";
 import { lookupHandleCached, lookupReverseCached, invalidateHandleCache } from "@/lib/dpi-cache";
@@ -31,7 +26,6 @@ import {
   XCircle,
   Loader,
   AlertTriangle,
-  ExternalLink,
   Sparkles,
   ShieldCheck,
   Search,
@@ -45,16 +39,15 @@ import {
   Copy,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 type SearchState = "idle" | "checking" | "available" | "taken" | "reserved" | "error";
 
 const POPULAR_SEARCH_SUGGESTIONS = ["solana", "satoshi", "vitalik", "alice", "bob", "pay", "dpi"];
 
 export default function HandlePage() {
-  const { publicKey, connected, sendTransaction, signTransaction } = useWallet();
+  const wallet = useWallet();
+  const { publicKey, connected } = wallet;
   const { connection } = useConnection();
-  const router = useRouter();
   const toast = useToast();
 
   // Search & Checker state
@@ -138,18 +131,22 @@ export default function HandlePage() {
       }
 
       try {
-        const handleInfo = await lookupHandleCached(connection, lower);
-        if (handleInfo) {
+        const program = getDpiProgram(connection);
+        const status = await checkHandleAvailability(program, lower);
+        if (status.state === "RESERVED") {
+          setSearchState("reserved");
+          triggerHaptic("warning");
+        } else if (status.state === "REGISTERED") {
           setSearchState("taken");
-          setSearchOwner(handleInfo.owner);
+          setSearchOwner(status.owner.toBase58());
           triggerHaptic("warning");
         } else {
           setSearchState("available");
           triggerHaptic("tap");
         }
-      } catch {
+      } catch (err: any) {
         setSearchState("error");
-        setSearchError("Failed to query Solana RPC");
+        setSearchError(parseAnchorError(err) || "Failed to query Solana RPC");
       }
     },
     [connection]
@@ -188,7 +185,7 @@ export default function HandlePage() {
 
   // Claim / Register handle
   const registerHandle = async (targetHandle: string) => {
-    if (!publicKey || (!sendTransaction && !signTransaction)) {
+    if (!publicKey) {
       toast.info("Please connect your Solana wallet first");
       return;
     }
@@ -216,80 +213,13 @@ export default function HandlePage() {
     triggerHaptic("selection");
 
     try {
-      const [handlePDA] = getHandleRegistryPDA(targetHandle);
-      const [reversePDA] = getReverseLookupPDA(publicKey);
-      const [reservedPDA] = getReservedHandlePDA(targetHandle);
-
-      const discriminator = Buffer.from([0x0f, 0xad, 0x15, 0x9e, 0x7d, 0xcc, 0xdd, 0x1d]);
-      const handleBytes = Buffer.from(targetHandle, "utf-8");
-      const lenBuf = Buffer.alloc(4);
-      lenBuf.writeUInt32LE(handleBytes.length, 0);
-      const data = Buffer.concat([discriminator, lenBuf, handleBytes]);
-
-      const instruction = new TransactionInstruction({
-        programId: DPI_PROGRAM_ID,
-        keys: [
-          { pubkey: publicKey, isSigner: true, isWritable: true },
-          { pubkey: handlePDA, isSigner: false, isWritable: true },
-          { pubkey: reversePDA, isSigner: false, isWritable: true },
-          { pubkey: reservedPDA, isSigner: false, isWritable: false },
-          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-        ],
-        data,
-      });
-
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
-      const messageV0 = new TransactionMessage({
-        payerKey: publicKey,
-        recentBlockhash: blockhash,
-        instructions: [instruction],
-      }).compileToV0Message();
-
-      const versionedTx = new VersionedTransaction(messageV0);
-
-      let sig: string;
-      if (signTransaction) {
-        const signed = await signTransaction(versionedTx as any);
-        setStepperStage("broadcasting");
-        sig = await connection.sendRawTransaction(signed.serialize(), {
-          skipPreflight: true,
-          preflightCommitment: "confirmed",
-          maxRetries: 5,
-        });
-      } else if (sendTransaction) {
-        sig = await sendTransaction(versionedTx, connection, {
-          skipPreflight: true,
-          preflightCommitment: "confirmed",
-          maxRetries: 5,
-        });
-      } else {
-        throw new Error("Wallet adapter does not support sending transactions.");
-      }
-
+      const program = getDpiProgram(connection, wallet);
+      setStepperStage("broadcasting");
+      const tx = await registerHandleSDK(program, wallet, targetHandle);
       setStepperStage("confirming");
+      await connection.confirmTransaction(tx, "confirmed");
 
-      try {
-        const confirmation = await Promise.race([
-          connection.confirmTransaction(
-            { signature: sig, blockhash, lastValidBlockHeight },
-            "confirmed"
-          ),
-          new Promise<{ value: { err: null } }>((resolve) =>
-            setTimeout(() => resolve({ value: { err: null } }), 20000)
-          ),
-        ]);
-
-        if (confirmation?.value?.err) {
-          throw new Error(`Transaction failed on-chain: ${JSON.stringify(confirmation.value.err)}`);
-        }
-      } catch (confirmErr: any) {
-        const status = await connection.getSignatureStatus(sig).catch(() => null);
-        if (status?.value?.err) {
-          throw new Error(`Transaction failed on-chain: ${JSON.stringify(status.value.err)}`);
-        }
-      }
-
-      setTxSig(sig);
+      setTxSig(tx);
       setMyHandle(targetHandle);
       setSearchState("taken");
       setSearchOwner(publicKey.toBase58());
@@ -298,26 +228,21 @@ export default function HandlePage() {
 
       invalidateHandleCache(targetHandle, publicKey);
       toast.success(`@${targetHandle} is now claimed on Solana Devnet!`, "Handle Registered 🎉");
-    } catch (e: unknown) {
+    } catch (e: any) {
       triggerHaptic("error");
-      const msg = e instanceof Error ? e.message : "Transaction failed";
-      let friendlyError = msg;
-      if (msg.includes("0x177a")) friendlyError = "Wallet already owns a registered handle";
-      else if (msg.includes("0x1779")) friendlyError = "Invalid handle format";
-      else if (msg.includes("0x1772")) friendlyError = "This handle is reserved by DPI";
-      else if (msg.includes("0x1776")) friendlyError = "Handle is already registered";
-
+      const friendlyError = parseAnchorError(e);
       setSearchError(friendlyError);
       toast.error(friendlyError, "Registration Failed");
+      setStepperOpen(false);
     } finally {
       setRegistering(false);
-      setStepperOpen(false);
+      setTimeout(() => setStepperOpen(false), 1500);
     }
   };
 
   // Transfer Handle logic
   const handleTransfer = async () => {
-    if (!publicKey || (!sendTransaction && !signTransaction) || !myHandle || !newOwnerAddress) return;
+    if (!publicKey || !myHandle || !newOwnerAddress) return;
 
     let targetPubKey: PublicKey;
     try {
@@ -338,74 +263,11 @@ export default function HandlePage() {
     triggerHaptic("selection");
 
     try {
-      const [handlePDA] = getHandleRegistryPDA(myHandle);
-      const [currentReversePDA] = getReverseLookupPDA(publicKey);
-      const [newReversePDA] = getReverseLookupPDA(targetPubKey);
-
-      const discriminator = Buffer.from([0x26, 0x14, 0x16, 0x76, 0x6e, 0x05, 0x88, 0x6f]);
-
-      const instruction = new TransactionInstruction({
-        programId: DPI_PROGRAM_ID,
-        keys: [
-          { pubkey: publicKey, isSigner: true, isWritable: false },
-          { pubkey: handlePDA, isSigner: false, isWritable: true },
-          { pubkey: currentReversePDA, isSigner: false, isWritable: true },
-          { pubkey: newReversePDA, isSigner: false, isWritable: true },
-          { pubkey: targetPubKey, isSigner: false, isWritable: false },
-        ],
-        data: discriminator,
-      });
-
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
-      const messageV0 = new TransactionMessage({
-        payerKey: publicKey,
-        recentBlockhash: blockhash,
-        instructions: [instruction],
-      }).compileToV0Message();
-
-      const versionedTx = new VersionedTransaction(messageV0);
-
-      let sig: string;
-      if (signTransaction) {
-        const signed = await signTransaction(versionedTx as any);
-        setStepperStage("broadcasting");
-        sig = await connection.sendRawTransaction(signed.serialize(), {
-          skipPreflight: true,
-          preflightCommitment: "confirmed",
-          maxRetries: 5,
-        });
-      } else if (sendTransaction) {
-        sig = await sendTransaction(versionedTx, connection, {
-          skipPreflight: true,
-          preflightCommitment: "confirmed",
-          maxRetries: 5,
-        });
-      } else {
-        throw new Error("Wallet adapter does not support sending transactions.");
-      }
-
+      const program = getDpiProgram(connection, wallet);
+      setStepperStage("broadcasting");
+      const tx = await transferHandleSDK(program, wallet, myHandle, targetPubKey);
       setStepperStage("confirming");
-
-      try {
-        const confirmation = await Promise.race([
-          connection.confirmTransaction(
-            { signature: sig, blockhash, lastValidBlockHeight },
-            "confirmed"
-          ),
-          new Promise<{ value: { err: null } }>((resolve) =>
-            setTimeout(() => resolve({ value: { err: null } }), 20000)
-          ),
-        ]);
-
-        if (confirmation?.value?.err) {
-          throw new Error(`Transaction failed on-chain: ${JSON.stringify(confirmation.value.err)}`);
-        }
-      } catch (confirmErr: any) {
-        const status = await connection.getSignatureStatus(sig).catch(() => null);
-        if (status?.value?.err) {
-          throw new Error(`Transaction failed on-chain: ${JSON.stringify(status.value.err)}`);
-        }
-      }
+      await connection.confirmTransaction(tx, "confirmed");
 
       invalidateHandleCache(myHandle, publicKey);
       invalidateHandleCache(myHandle, targetPubKey);
@@ -418,10 +280,11 @@ export default function HandlePage() {
       loadMyHandle();
     } catch (err: any) {
       triggerHaptic("error");
-      toast.error(err.message || "Failed to transfer handle", "Transfer Error");
+      toast.error(parseAnchorError(err), "Transfer Error");
+      setStepperOpen(false);
     } finally {
       setTransferring(false);
-      setStepperOpen(false);
+      setTimeout(() => setStepperOpen(false), 1500);
     }
   };
 
