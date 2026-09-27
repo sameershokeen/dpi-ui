@@ -90,7 +90,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   {t.title}
                 </div>
               )}
-              <div className="text-xs text-slate-300 leading-relaxed warp-break-words">
+              <div className="text-xs text-slate-300 leading-relaxed wrap-break-word">
                 {t.message}
               </div>
             </div>

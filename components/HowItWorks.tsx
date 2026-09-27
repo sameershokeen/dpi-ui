@@ -101,7 +101,7 @@ export default function HowItWorks() {
   const CurrentIcon = current.icon;
 
   return (
-    <div className="rounded-3xl border border-indigo-500/25 bg-[#0D1220]/90 backdrop-blur-xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
+    <div className="rounded-3xl border border-(--border) bg-(--bg-card) backdrop-blur-xl p-5 sm:p-6 shadow-2xl relative overflow-hidden transition-colors">
       {/* Decorative background glow */}
       <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-500/15 rounded-full blur-3xl pointer-events-none" />
@@ -109,22 +109,22 @@ export default function HowItWorks() {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-[11px] font-bold text-indigo-400 mb-1">
-            <Sparkles size={12} className="text-indigo-400" />
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-[11px] font-bold text-indigo-500 dark:text-indigo-400 mb-1">
+            <Sparkles size={12} className="text-indigo-500 dark:text-indigo-400" />
             Simple 3-Step Flow
           </div>
-          <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">
+          <h2 className="text-lg sm:text-xl font-black text-foreground tracking-tight">
             How DPI Protocol Works
           </h2>
         </div>
-        <div className="hidden sm:flex items-center gap-1 text-[11px] text-slate-400 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">
-          <ShieldCheck size={13} className="text-emerald-400" />
+        <div className="hidden sm:flex items-center gap-1 text-[11px] text-(--text-muted) bg-(--bg-subtle) px-2.5 py-1 rounded-lg border border-(--border)">
+          <ShieldCheck size={13} className="text-emerald-500 dark:text-emerald-400" />
           <span>Non-custodial</span>
         </div>
       </div>
 
       {/* Step Selector Tabs */}
-      <div className="grid grid-cols-3 gap-2 p-1.5 rounded-2xl bg-[#080B12] border border-white/5 mb-5">
+      <div className="grid grid-cols-3 gap-2 p-1.5 rounded-2xl bg-(--bg-subtle) border border-(--border) mb-5">
         {STEPS.map((step) => {
           const Icon = step.icon;
           const isActive = step.id === activeStep;
@@ -189,21 +189,21 @@ export default function HowItWorks() {
           )}
         </div>
 
-        <p className="text-xs text-slate-300 leading-relaxed mb-4">
+        <p className="text-xs text-(--text-secondary) leading-relaxed mb-4">
           {current.description}
         </p>
 
         {/* Live Mockup Box */}
-        <div className="rounded-xl bg-[#090D17]/90 border border-white/10 p-3.5 flex items-center justify-between gap-3 shadow-inner">
+        <div className="rounded-xl bg-(--bg-subtle) border border-(--border) p-3.5 flex items-center justify-between gap-3 shadow-inner">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 shrink-0">
-              <CheckCircle2 size={16} className="text-emerald-400" />
+            <div className="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-500 dark:text-indigo-300 shrink-0">
+              <CheckCircle2 size={16} className="text-emerald-500 dark:text-emerald-400" />
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-bold text-white truncate font-mono">
+              <div className="text-xs font-bold text-foreground truncate font-mono">
                 {current.mockup.headline}
               </div>
-              <div className="text-[11px] text-slate-400 font-medium truncate">
+              <div className="text-[11px] text-(--text-muted) font-medium truncate">
                 {current.mockup.detail}
               </div>
             </div>

@@ -48,12 +48,12 @@ export default function Footer() {
   const shortProgramId = `${PROGRAM_ID.toBase58().slice(0, 6)}...${PROGRAM_ID.toBase58().slice(-4)}`;
 
   return (
-    <footer className="w-full mt-auto border-t border-white/8 bg-[#070A12]/90 backdrop-blur-xl px-4 py-6 text-xs text-slate-400">
+    <footer className="w-full mt-auto border-t border-(--border) bg-(--bg-glass-strong) backdrop-blur-xl px-4 py-6 text-xs text-(--text-muted) transition-colors duration-200">
       <div className="flex flex-col gap-4">
         {/* Protocol Identity & Live Status */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="relative w-6 h-6 rounded-lg overflow-hidden border border-indigo-500/30 shadow-sm bg-[#090B10] shrink-0">
+            <div className="relative w-6 h-6 rounded-lg overflow-hidden border border-indigo-500/30 shadow-sm bg-white dark:bg-[#090B10] shrink-0">
               <Image
                 src="/dpi-icon-square.png"
                 alt="DPI"
@@ -62,7 +62,7 @@ export default function Footer() {
                 className="w-full h-full object-cover"
               />
             </div>
-            <span className="font-bold text-white tracking-tight text-sm">
+            <span className="font-bold text-foreground tracking-tight text-sm">
               DPI Registry
             </span>
           </div>
@@ -71,19 +71,19 @@ export default function Footer() {
           <div
             className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-colors ${
               rpcStatus === "healthy"
-                ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
+                ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
                 : rpcStatus === "slow"
-                ? "bg-amber-500/15 border-amber-500/30 text-amber-400"
-                : "bg-rose-500/15 border-rose-500/30 text-rose-400"
+                ? "bg-amber-500/15 border-amber-500/30 text-amber-600 dark:text-amber-400"
+                : "bg-rose-500/15 border-rose-500/30 text-rose-600 dark:text-rose-400"
             }`}
           >
             <span
               className={`w-1.5 h-1.5 rounded-full animate-pulse ${
                 rpcStatus === "healthy"
-                  ? "bg-emerald-400"
+                  ? "bg-emerald-500"
                   : rpcStatus === "slow"
-                  ? "bg-amber-400"
-                  : "bg-rose-400"
+                  ? "bg-amber-500"
+                  : "bg-rose-500"
               }`}
             />
             <span>
@@ -97,14 +97,14 @@ export default function Footer() {
         </div>
 
         {/* Contract Address Explorer Link */}
-        <div className="p-3 rounded-2xl bg-white/3 border border-white/8 flex items-center justify-between gap-2">
+        <div className="p-3 rounded-2xl bg-(--bg-subtle) border border-(--border) flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <Zap size={14} className="text-indigo-400 shrink-0" />
+            <Zap size={14} className="text-indigo-500 shrink-0" />
             <div className="min-w-0">
-              <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+              <div className="text-[10px] uppercase font-bold text-(--text-muted) tracking-wider">
                 Program ID
               </div>
-              <div className="font-mono text-xs text-slate-200 truncate">
+              <div className="font-mono text-xs text-(--text-secondary) truncate">
                 {shortProgramId}
               </div>
             </div>
@@ -113,7 +113,7 @@ export default function Footer() {
             href={explorerUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1 text-[11px] font-bold text-indigo-400 hover:text-indigo-300 shrink-0 bg-indigo-500/10 hover:bg-indigo-500/20 px-2.5 py-1.5 rounded-xl border border-indigo-500/30 transition-colors"
+            className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 shrink-0 bg-indigo-500/10 hover:bg-indigo-500/20 px-2.5 py-1.5 rounded-xl border border-indigo-500/30 transition-colors"
           >
             <span>Explorer</span>
             <ExternalLink size={12} />
@@ -121,11 +121,11 @@ export default function Footer() {
         </div>
 
         {/* Navigation & Documentation Links */}
-        <div className="flex items-center justify-between pt-1 border-t border-white/5 text-[11px]">
+        <div className="flex items-center justify-between pt-1 border-t border-(--border-subtle) text-[11px]">
           <div className="flex items-center gap-3">
             <Link
               href="/community"
-              className="flex items-center gap-1 text-slate-400 hover:text-white transition-colors"
+              className="flex items-center gap-1 text-(--text-muted) hover:text-foreground transition-colors"
             >
               <BookOpen size={12} />
               <span>Docs</span>
@@ -134,7 +134,7 @@ export default function Footer() {
               href="https://github.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-slate-400 hover:text-white transition-colors"
+              className="flex items-center gap-1 text-(--text-muted) hover:text-foreground transition-colors"
             >
               <Code2 size={12} />
               <span>GitHub</span>

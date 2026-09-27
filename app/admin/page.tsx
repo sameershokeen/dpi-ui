@@ -483,7 +483,7 @@ export default function AdminConsolePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-white/10 text-xs">
+          <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-(--border) text-xs">
             <div>
               <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">
                 Config PDA
@@ -506,7 +506,7 @@ export default function AdminConsolePage() {
               <AlertTriangle className="text-amber-400 shrink-0 mt-0.5" size={20} />
               <div>
                 <h3 className="text-sm font-bold text-white">Config PDA Not Initialized</h3>
-                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                <p className="text-xs text-(--text-secondary) mt-1 leading-relaxed">
                   The registry config account has not been initialized on this Solana cluster yet.
                   You can initialize it now to become the protocol admin authority.
                 </p>
@@ -532,12 +532,12 @@ export default function AdminConsolePage() {
         {/* State 2: Wallet Not Connected */}
         {!connected && (
           <Card className="p-8 text-center flex flex-col items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400">
+            <div className="w-14 h-14 rounded-2xl bg-(--bg-subtle) border border-(--border) flex items-center justify-center text-slate-400">
               <Lock size={26} />
             </div>
             <div>
               <h3 className="text-base font-bold text-white">Connect Admin Wallet</h3>
-              <p className="text-xs text-slate-400 max-w-xs mt-1">
+              <p className="text-xs text-(--text-muted) max-w-xs mt-1">
                 You must connect a Solana wallet authorized as the DPI protocol admin.
               </p>
             </div>
@@ -548,14 +548,14 @@ export default function AdminConsolePage() {
         {/* State 3: Connected but NOT Admin */}
         {connected && isConfigInitialized && !isAdmin && !loadingConfig && (
           <Card className="p-6 border-red-500/30 bg-red-500/10 flex flex-col items-center text-center gap-3">
-            <ShieldAlert size={36} className="text-red-400" />
+            <ShieldAlert size={36} className="text-red-500 dark:text-red-400" />
             <div>
-              <h3 className="text-base font-bold text-white">Unauthorized Access</h3>
-              <p className="text-xs text-slate-300 max-w-xs mt-1">
-                Connected wallet <span className="font-mono text-white font-bold">{publicKey?.toBase58().slice(0, 6)}...{publicKey?.toBase58().slice(-4)}</span> is not configured as the protocol administrator.
+              <h3 className="text-base font-bold text-foreground">Unauthorized Access</h3>
+              <p className="text-xs text-(--text-secondary) max-w-xs mt-1">
+                Connected wallet <span className="font-mono text-foreground font-bold">{publicKey?.toBase58().slice(0, 6)}...{publicKey?.toBase58().slice(-4)}</span> is not configured as the protocol administrator.
               </p>
             </div>
-            <div className="text-[11px] text-slate-400 font-mono mt-1">
+            <div className="text-[11px] text-(--text-muted) font-mono mt-1">
               Required Admin: {configAdmin ? configAdmin.toBase58() : "None"}
             </div>
           </Card>
@@ -565,7 +565,7 @@ export default function AdminConsolePage() {
         {connected && isConfigInitialized && isAdmin && (
           <div className="flex flex-col gap-5">
             {/* Tab Navigation */}
-            <div className="grid grid-cols-5 gap-1 p-1 rounded-2xl bg-[#0F1424] border border-white/10">
+            <div className="grid grid-cols-5 gap-1 p-1 rounded-2xl bg-(--bg-subtle) border border-(--border)">
               {[
                 { id: "moderation", label: "Moderate", icon: Shield },
                 { id: "reservations", label: "Reserve", icon: BookmarkPlus },
@@ -582,7 +582,7 @@ export default function AdminConsolePage() {
                   className={`flex flex-col items-center justify-center gap-1 py-2 px-0.5 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${
                     activeTab === id
                       ? "bg-purple-600 text-white shadow-md shadow-purple-500/25"
-                      : "text-slate-400 hover:text-white"
+                      : "text-(--text-muted) hover:text-foreground"
                   }`}
                 >
                   <Icon size={14} />
@@ -596,11 +596,11 @@ export default function AdminConsolePage() {
               <div className="flex flex-col gap-4 animate-in fade-in duration-200">
                 <Card className="p-5 flex flex-col gap-4">
                   <div>
-                    <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                    <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
                       <Shield size={16} className="text-purple-400" />
                       Handle Moderation & Freeze Controls
                     </h2>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-(--text-muted) mt-1">
                       Inspect any registered handle and freeze or unfreeze transfer capabilities.
                     </p>
                   </div>
@@ -614,7 +614,7 @@ export default function AdminConsolePage() {
                         value={modSearchHandle}
                         onChange={(e) => setModSearchHandle(e.target.value)}
                         placeholder="search handle to inspect..."
-                        className="w-full pl-8 pr-3.5 py-2.5 rounded-xl bg-white/4 border border-white/10 text-xs text-white outline-none focus:border-purple-400/50"
+                        className="w-full pl-8 pr-3.5 py-2.5 rounded-xl bg-(--bg-subtle) border border-(--border) text-xs text-foreground placeholder:text-(--text-muted) outline-none focus:border-purple-400/50"
                       />
                     </div>
                     <button
@@ -628,13 +628,13 @@ export default function AdminConsolePage() {
                   </form>
 
                   {modHandleData && (
-                    <div className="p-4 rounded-2xl bg-white/3 border border-white/8 flex flex-col gap-3">
+                    <div className="p-4 rounded-2xl bg-(--bg-subtle) border border-(--border) flex flex-col gap-3">
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-base font-black text-white">
+                          <div className="text-base font-black text-foreground">
                             @{modHandleData.handle}
                           </div>
-                          <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-400">
+                          <div className="mt-1 flex items-center gap-1.5 text-xs text-(--text-muted)">
                             <span>Owner:</span>
                             <CopyableAddress
                               address={modHandleData.owner}
@@ -651,7 +651,7 @@ export default function AdminConsolePage() {
                         )}
                       </div>
 
-                      <div className="pt-2 border-t border-white/8 flex gap-2">
+                      <div className="pt-2 border-t border-(--border) flex gap-2">
                         {modHandleData.frozen ? (
                           <button
                             onClick={handleUnfreezeAction}
@@ -684,11 +684,11 @@ export default function AdminConsolePage() {
                 {/* Single Reservation */}
                 <Card className="p-5 flex flex-col gap-3">
                   <div>
-                    <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                    <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
                       <BookmarkPlus size={16} className="text-purple-400" />
                       Single Handle Reservation
                     </h2>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-(--text-muted) mt-1">
                       Permanently block a single trademarked or high-value handle from public registration.
                     </p>
                   </div>
@@ -702,7 +702,7 @@ export default function AdminConsolePage() {
                         value={singleReserveHandle}
                         onChange={(e) => setSingleReserveHandle(e.target.value)}
                         placeholder="e.g. solana, google"
-                        className="w-full pl-8 pr-3.5 py-2.5 rounded-xl bg-white/4 border border-white/10 text-xs text-white outline-none focus:border-purple-400/50"
+                        className="w-full pl-8 pr-3.5 py-2.5 rounded-xl bg-(--bg-subtle) border border-(--border) text-xs text-foreground placeholder:text-(--text-muted) outline-none focus:border-purple-400/50"
                       />
                     </div>
                     <button
@@ -720,15 +720,15 @@ export default function AdminConsolePage() {
                 <Card className="p-5 flex flex-col gap-3">
                   <div>
                     <div className="flex items-center justify-between">
-                      <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                      <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
                         <Layers size={16} className="text-indigo-400" />
                         Batch Handle Reservation
                       </h2>
-                      <span className="text-[10px] font-bold text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded-full border border-indigo-500/30">
+                      <span className="text-[10px] font-bold text-indigo-500 dark:text-indigo-300 bg-indigo-500/10 dark:bg-indigo-500/20 px-2 py-0.5 rounded-full border border-indigo-500/30">
                         {parsedBatchHandles.length} / 20 handles
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-(--text-muted) mt-1">
                       Atomically reserve up to 20 handles in one transaction. Separate handles with commas or newlines.
                     </p>
                   </div>
@@ -738,15 +738,15 @@ export default function AdminConsolePage() {
                     value={batchRawInput}
                     onChange={(e) => setBatchRawInput(e.target.value)}
                     placeholder="paypal, stripe, visa, mastercard, apple, microsoft, dev, finance"
-                    className="w-full p-3 rounded-xl bg-white/4 border border-white/10 text-xs text-white font-mono outline-none focus:border-indigo-400/50"
+                    className="w-full p-3 rounded-xl bg-(--bg-subtle) border border-(--border) text-xs text-foreground font-mono placeholder:text-(--text-muted) outline-none focus:border-indigo-400/50"
                   />
 
                   {parsedBatchHandles.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-2 rounded-xl bg-white/2 border border-white/6">
+                    <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-2 rounded-xl bg-(--bg-subtle) border border-(--border)">
                       {parsedBatchHandles.map((h, i) => (
                         <span
                           key={i}
-                          className="px-2 py-0.5 rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-mono text-[11px]"
+                          className="px-2 py-0.5 rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-600 dark:text-indigo-300 font-mono text-[11px]"
                         >
                           @{h}
                         </span>
@@ -781,10 +781,10 @@ export default function AdminConsolePage() {
                   <div className="flex items-start gap-2.5">
                     <AlertTriangle className="text-amber-400 shrink-0 mt-0.5" size={18} />
                     <div>
-                      <h2 className="text-sm font-bold text-white">
+                      <h2 className="text-sm font-bold text-foreground">
                         Emergency Handle Recovery
                       </h2>
-                      <p className="text-xs text-slate-400 mt-1">
+                      <p className="text-xs text-(--text-muted) mt-1">
                         Reassigns a compromised, disputed, or lost handle to a new verified owner address.
                         Automatically closes the prior owner&apos;s ReverseLookup mapping.
                       </p>
@@ -793,31 +793,31 @@ export default function AdminConsolePage() {
 
                   <form onSubmit={handleEmergencyRecovery} className="flex flex-col gap-3">
                     <div>
-                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                      <label className="text-[11px] font-bold text-(--text-muted) uppercase tracking-wider block mb-1">
                         Target Handle
                       </label>
                       <div className="relative">
-                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-amber-400 font-bold text-sm">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-amber-500 dark:text-amber-400 font-bold text-sm">
                           @
                         </span>
                         <input
                           value={recoveryHandle}
                           onChange={(e) => setRecoveryHandle(e.target.value)}
                           placeholder="handle to recover"
-                          className="w-full pl-8 pr-3.5 py-2.5 rounded-xl bg-white/4 border border-white/10 text-xs text-white outline-none focus:border-amber-400/50"
+                          className="w-full pl-8 pr-3.5 py-2.5 rounded-xl bg-(--bg-subtle) border border-(--border) text-xs text-foreground placeholder:text-(--text-muted) outline-none focus:border-amber-400/50"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                      <label className="text-[11px] font-bold text-(--text-muted) uppercase tracking-wider block mb-1">
                         New Owner Public Key
                       </label>
                       <input
                         value={recoveryNewOwner}
                         onChange={(e) => setRecoveryNewOwner(e.target.value)}
                         placeholder="New owner Solana address (base58)"
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/4 border border-white/10 text-xs font-mono text-white outline-none focus:border-amber-400/50"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-(--bg-subtle) border border-(--border) text-xs font-mono text-foreground placeholder:text-(--text-muted) outline-none focus:border-amber-400/50"
                       />
                     </div>
 
@@ -843,25 +843,25 @@ export default function AdminConsolePage() {
               <div className="flex flex-col gap-4 animate-in fade-in duration-200">
                 <Card className="p-5 flex flex-col gap-4">
                   <div>
-                    <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                    <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
                       <KeyRound size={16} className="text-purple-400" />
                       Protocol Governance & Authority Transfer
                     </h2>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-(--text-muted) mt-1">
                       Transfer protocol administrator rights to a new public key or multisig.
                     </p>
                   </div>
 
                   <form onSubmit={handleUpdateAdmin} className="flex flex-col gap-3">
                     <div>
-                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                      <label className="text-[11px] font-bold text-(--text-muted) uppercase tracking-wider block mb-1">
                         New Administrator Address
                       </label>
                       <input
                         value={newAdminKey}
                         onChange={(e) => setNewAdminKey(e.target.value)}
                         placeholder="New admin Solana public key (base58)"
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/4 border border-white/10 text-xs font-mono text-white outline-none focus:border-purple-400/50"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-(--bg-subtle) border border-(--border) text-xs font-mono text-foreground placeholder:text-(--text-muted) outline-none focus:border-purple-400/50"
                       />
                     </div>
 
@@ -882,25 +882,25 @@ export default function AdminConsolePage() {
 
                 {/* Protocol Info Card */}
                 <Card className="p-5 flex flex-col gap-3">
-                  <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider">
+                  <span className="text-[11px] uppercase font-bold text-(--text-muted) tracking-wider">
                     Program Parameters
                   </span>
-                  <div className="divide-y divide-white/6 text-xs">
+                  <div className="divide-y divide-(--border) text-xs">
                     <div className="py-2 flex justify-between">
-                      <span className="text-slate-400">Program ID</span>
-                      <span className="font-mono text-purple-300">{shortConfigPda}</span>
+                      <span className="text-(--text-muted)">Program ID</span>
+                      <span className="font-mono text-purple-600 dark:text-purple-300">{shortConfigPda}</span>
                     </div>
                     <div className="py-2 flex justify-between">
-                      <span className="text-slate-400">Max Batch Size</span>
-                      <span className="font-bold text-white font-mono">20 handles</span>
+                      <span className="text-(--text-muted)">Max Batch Size</span>
+                      <span className="font-bold text-foreground font-mono">20 handles</span>
                     </div>
                     <div className="py-2 flex justify-between">
-                      <span className="text-slate-400">Handle Length</span>
-                      <span className="font-bold text-white font-mono">3 to 32 chars</span>
+                      <span className="text-(--text-muted)">Handle Length</span>
+                      <span className="font-bold text-foreground font-mono">3 to 32 chars</span>
                     </div>
                     <div className="py-2 flex justify-between">
-                      <span className="text-slate-400">Allowed Characters</span>
-                      <span className="font-mono text-slate-300">[a-z0-9_-]</span>
+                      <span className="text-(--text-muted)">Allowed Characters</span>
+                      <span className="font-mono text-(--text-secondary)">[a-z0-9_-]</span>
                     </div>
                   </div>
                 </Card>
@@ -911,7 +911,7 @@ export default function AdminConsolePage() {
             {activeTab === "activity" && (
               <div className="flex flex-col gap-4 animate-in fade-in duration-200">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                  <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
                     <Activity size={16} className="text-purple-400" />
                     Admin Activity Log
                   </h2>
@@ -919,26 +919,26 @@ export default function AdminConsolePage() {
                     type="button"
                     onClick={() => { triggerHaptic("tap"); loadActivityLog(); }}
                     disabled={activityLoading}
-                    className="flex items-center gap-1.5 text-xs font-bold text-purple-300 hover:text-white px-2.5 py-1 rounded-lg bg-purple-500/20 border border-purple-400/30 transition-all cursor-pointer disabled:opacity-50"
+                    className="flex items-center gap-1.5 text-xs font-bold text-purple-600 dark:text-purple-300 hover:text-purple-700 dark:hover:text-white px-2.5 py-1 rounded-lg bg-purple-500/10 dark:bg-purple-500/20 border border-purple-400/30 transition-all cursor-pointer disabled:opacity-50"
                   >
                     {activityLoading ? <Loader size={12} className="animate-spin" /> : <RefreshCw size={12} />}
                     Refresh
                   </button>
                 </div>
 
-                <Card className="overflow-hidden border-white/15">
+                <Card className="overflow-hidden border-(--border)">
                   {activityLoading ? (
-                    <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-400">
+                    <div className="flex items-center justify-center gap-2 py-10 text-sm text-(--text-muted)">
                       <Loader size={18} className="animate-spin text-purple-400" />
                       Loading on-chain activity...
                     </div>
                   ) : activityLog.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center gap-2 py-10 text-xs text-slate-500">
-                      <Activity size={28} className="text-slate-600" />
+                    <div className="flex flex-col items-center justify-center gap-2 py-10 text-xs text-(--text-muted)">
+                      <Activity size={28} className="text-(--text-muted) opacity-50" />
                       No admin transactions found
                     </div>
                   ) : (
-                    <div className="divide-y divide-white/6">
+                    <div className="divide-y divide-(--border)">
                       {activityLog.map((entry) => {
                         const date = entry.blockTime
                           ? new Date(entry.blockTime * 1000)
@@ -949,23 +949,23 @@ export default function AdminConsolePage() {
                         return (
                           <div
                             key={entry.signature}
-                            className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-white/3 transition-colors"
+                            className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-(--bg-subtle) transition-colors"
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               <div className={`w-2 h-2 rounded-full shrink-0 ${
                                 entry.status === "success" ? "bg-emerald-400" : "bg-rose-400"
                               }`} />
                               <div className="min-w-0">
-                                <div className="text-xs font-mono text-white truncate">
+                                <div className="text-xs font-mono text-foreground truncate">
                                   {entry.signature.slice(0, 16)}...{entry.signature.slice(-8)}
                                 </div>
-                                <div className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                                <div className="text-[10px] text-(--text-muted) flex items-center gap-1 mt-0.5">
                                   <Clock size={9} />
                                   {timeStr}
                                   <span className={`ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold ${
                                     entry.status === "success"
-                                      ? "bg-emerald-500/20 text-emerald-400"
-                                      : "bg-rose-500/20 text-rose-400"
+                                      ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                                      : "bg-rose-500/20 text-rose-600 dark:text-rose-400"
                                   }`}>
                                     {entry.status}
                                   </span>
@@ -976,7 +976,7 @@ export default function AdminConsolePage() {
                               href={getExplorerUrl("tx", entry.signature, network)}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1.5 rounded-lg bg-white/5 hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-300 transition-colors shrink-0"
+                              className="p-1.5 rounded-lg bg-(--bg-subtle) hover:bg-indigo-500/20 text-(--text-muted) hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors shrink-0"
                               title="View on Solana Explorer"
                             >
                               <ExternalLink size={13} />
@@ -988,7 +988,7 @@ export default function AdminConsolePage() {
                   )}
                 </Card>
 
-                <p className="text-[10px] text-slate-500 text-center px-2">
+                <p className="text-[10px] text-(--text-muted) text-center px-2">
                   Showing recent program-level transactions on the DPI Protocol ID. All admin actions (freeze, reserve, recover, governance) are on-chain and publicly verifiable.
                 </p>
               </div>

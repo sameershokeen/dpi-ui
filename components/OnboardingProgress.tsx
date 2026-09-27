@@ -95,13 +95,13 @@ export default function OnboardingProgress({
       className={`relative rounded-2xl p-4 border transition-all duration-500 ${
         allDone
           ? "bg-emerald-500/10 border-emerald-500/30"
-          : "bg-linear-to-br from-indigo-950/60 to-purple-950/40 border-indigo-400/30 animate-[onboard-pulse_3s_ease-in-out_infinite]"
+          : "bg-linear-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/60 dark:to-purple-950/40 border-indigo-400/30 animate-[onboard-pulse_3s_ease-in-out_infinite]"
       }`}
     >
       {/* Dismiss button */}
       <button
         onClick={handleDismiss}
-        className="absolute top-3 right-3 p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+        className="absolute top-3 right-3 p-1 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 text-(--text-muted) hover:text-foreground transition-colors cursor-pointer"
         aria-label="Dismiss setup guide"
       >
         <X size={14} />
@@ -109,16 +109,16 @@ export default function OnboardingProgress({
 
       {/* Header */}
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-xs font-bold text-white">
+        <span className="text-xs font-bold text-foreground">
           {allDone ? "Setup Complete! 🎉" : "DPI Setup"}
         </span>
-        <span className="text-[10px] font-bold text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded-full border border-indigo-500/30">
+        <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded-full border border-indigo-500/30">
           {completedCount} of {steps.length}
         </span>
       </div>
 
       {/* Progress bar */}
-      <div className="h-1.5 w-full bg-white/8 rounded-full overflow-hidden mb-3">
+      <div className="h-1.5 w-full bg-black/8 dark:bg-white/8 rounded-full overflow-hidden mb-3">
         <div
           className={`h-full rounded-full transition-all duration-700 ease-out ${
             allDone
@@ -140,8 +140,8 @@ export default function OnboardingProgress({
               <div
                 className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 transition-all ${
                   step.done
-                    ? "bg-emerald-500/25 text-emerald-400 border border-emerald-500/40"
-                    : "bg-white/5 text-slate-500 border border-white/10"
+                    ? "bg-emerald-500/25 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40"
+                    : "bg-black/5 dark:bg-white/5 text-(--text-muted) border border-(--border)"
                 }`}
               >
                 {step.done ? (
@@ -152,7 +152,7 @@ export default function OnboardingProgress({
               </div>
               <span
                 className={`text-xs font-semibold transition-colors ${
-                  step.done ? "text-slate-400 line-through" : "text-white"
+                  step.done ? "text-(--text-muted) line-through" : "text-foreground"
                 }`}
               >
                 {step.label}
@@ -161,7 +161,7 @@ export default function OnboardingProgress({
             {step.action && (
               <Link
                 href={step.action.href}
-                className="text-[10px] font-bold text-indigo-300 bg-indigo-500/20 hover:bg-indigo-500/30 px-2.5 py-1 rounded-lg border border-indigo-500/30 transition-all active:scale-95"
+                className="text-[10px] font-bold text-indigo-600 dark:text-indigo-300 bg-indigo-500/20 hover:bg-indigo-500/30 px-2.5 py-1 rounded-lg border border-indigo-500/30 transition-all active:scale-95"
               >
                 {step.action.label}
               </Link>

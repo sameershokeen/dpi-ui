@@ -109,18 +109,18 @@ export default function AnimatedBalance({
 
       <div className="flex items-baseline gap-2">
         <span
-          className={`text-4xl font-black text-white tracking-tight font-sans transition-all duration-300 ${
+          className={`text-4xl font-black text-foreground tracking-tight font-sans transition-all duration-300 ${
             glowType === "increase"
-              ? "text-emerald-300 drop-shadow-[0_0_15px_rgba(16,185,129,0.7)]"
+              ? "\!text-emerald-600 dark:\!text-emerald-300 drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]"
               : glowType === "decrease"
-              ? "text-rose-300 drop-shadow-[0_0_15px_rgba(244,63,94,0.7)]"
+              ? "\!text-rose-600 dark:\!text-rose-300 drop-shadow-[0_0_15px_rgba(244,63,94,0.5)]"
               : ""
           }`}
         >
           {displayValue !== null ? displayValue.toFixed(decimals) : "—"}
         </span>
         {symbol && (
-          <span className="text-xl font-black text-indigo-400">{symbol}</span>
+          <span className="text-xl font-black text-indigo-600 dark:text-indigo-400">{symbol}</span>
         )}
       </div>
     </div>

@@ -185,20 +185,20 @@ export default function CommunityPage() {
                 fetchDirectory();
               }}
               disabled={loading}
-              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+              className="p-1.5 rounded-lg bg-(--bg-subtle) hover:bg-(--bg-card-hover) text-slate-300 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
               title="Refresh directory"
             >
               <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
             </button>
           </div>
-          <p className="text-xs text-slate-300 leading-relaxed">
+          <p className="text-xs text-(--text-secondary) leading-relaxed">
             Live on-chain registry of all decentralized identities created on the DPI Solana protocol.
           </p>
 
           {/* Metric Pills */}
-          <div className="flex items-center gap-3 mt-4 pt-3 border-t border-white/10 text-xs">
+          <div className="flex items-center gap-3 mt-4 pt-3 border-t border-(--border) text-xs">
             <div className="flex items-center gap-1.5">
-              <span className="text-slate-400">Total:</span>
+              <span className="text-(--text-muted)">Total:</span>
               <span className="font-bold text-white font-mono">{loading ? "…" : handles.length}</span>
             </div>
             <div className="w-1 h-1 rounded-full bg-slate-600" />
@@ -219,7 +219,7 @@ export default function CommunityPage() {
         </div>
 
         {/* Tab Switcher */}
-        <div className="grid grid-cols-2 p-1 rounded-2xl bg-white/4 border border-white/8 text-xs font-bold">
+        <div className="grid grid-cols-2 p-1 rounded-2xl bg-(--bg-subtle) border border-(--border) text-xs font-bold">
           <button
             onClick={() => {
               triggerHaptic("selection");
@@ -228,7 +228,7 @@ export default function CommunityPage() {
             className={`py-2 rounded-xl transition-all cursor-pointer ${
               activeTab === "directory"
                 ? "bg-indigo-600 text-white shadow-md"
-                : "text-slate-400 hover:text-white"
+                : "text-(--text-muted) hover:text-foreground"
             }`}
           >
             Registered Handles ({loading ? "…" : handles.length})
@@ -241,7 +241,7 @@ export default function CommunityPage() {
             className={`py-2 rounded-xl transition-all cursor-pointer ${
               activeTab === "governance"
                 ? "bg-indigo-600 text-white shadow-md"
-                : "text-slate-400 hover:text-white"
+                : "text-(--text-muted) hover:text-foreground"
             }`}
           >
             Ecosystem & Feed
@@ -252,19 +252,19 @@ export default function CommunityPage() {
           <>
             {/* Search & Filter Bar */}
             <div className="flex items-center gap-2">
-              <div className="flex-1 flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-[#12182B] border border-white/10 shadow-sm">
-                <Search size={14} className="text-slate-400 shrink-0" />
+              <div className="flex-1 flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-(--bg-subtle) border border-(--border) shadow-xs">
+                <Search size={14} className="text-(--text-muted) shrink-0" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search by @handle or wallet address..."
-                  className="flex-1 bg-transparent border-none outline-none text-xs text-white placeholder:text-slate-500 font-medium"
+                  className="flex-1 bg-transparent border-none outline-none text-xs text-foreground placeholder:text-(--text-muted) font-medium"
                 />
               </div>
 
               {/* Status Filter */}
-              <div className="flex items-center gap-1 p-1 rounded-xl bg-white/4 border border-white/8 text-[11px] font-bold">
+              <div className="flex items-center gap-1 p-1 rounded-xl bg-(--bg-subtle) border border-(--border) text-[11px] font-bold">
                 {(["all", "active", "frozen"] as const).map((f) => (
                   <button
                     key={f}
@@ -274,8 +274,8 @@ export default function CommunityPage() {
                     }}
                     className={`px-2 py-1 rounded-lg capitalize transition-colors cursor-pointer ${
                       filterState === f
-                        ? "bg-white/15 text-white"
-                        : "text-slate-400 hover:text-white"
+                        ? "bg-indigo-600 text-white shadow-xs"
+                        : "text-(--text-muted) hover:text-foreground"
                     }`}
                   >
                     {f}
@@ -288,17 +288,17 @@ export default function CommunityPage() {
             {loading ? (
               <Card className="p-8 text-center flex flex-col items-center justify-center gap-2">
                 <Loader size={24} className="animate-spin text-indigo-400" />
-                <span className="text-xs text-slate-400">Loading handles from Solana Devnet…</span>
+                <span className="text-xs text-(--text-muted)">Loading handles from Solana Devnet…</span>
               </Card>
             ) : filteredHandles.length === 0 ? (
               <Card className="p-8 text-center flex flex-col items-center justify-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400">
+                <div className="w-12 h-12 rounded-2xl bg-(--bg-subtle) border border-(--border) flex items-center justify-center text-(--text-muted)">
                   <AtSign size={20} />
                 </div>
-                <div className="text-sm font-bold text-white">
+                <div className="text-sm font-bold text-foreground">
                   {searchQuery ? "No matching handles found" : "No handles registered yet"}
                 </div>
-                <p className="text-xs text-slate-400 max-w-xs">
+                <p className="text-xs text-(--text-muted) max-w-xs">
                   {searchQuery
                     ? "Try a different search term or clear filters"
                     : "Be the first to claim a decentralized identity on the protocol!"}
@@ -322,23 +322,23 @@ export default function CommunityPage() {
                       className="p-4 flex items-center justify-between gap-3 hover:border-indigo-500/30 transition-colors"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-2xl bg-linear-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 border border-indigo-500/30 flex items-center justify-center font-black text-white text-sm shrink-0">
+                        <div className="w-10 h-10 rounded-2xl bg-linear-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 border border-indigo-500/30 flex items-center justify-center font-black text-indigo-600 dark:text-white text-sm shrink-0">
                           {item.handle[0].toUpperCase()}
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
                             <Link
                               href={`/handle/${item.handle}`}
-                              className="text-sm font-black text-white hover:text-indigo-300 transition-colors truncate"
+                              className="text-sm font-black text-foreground hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors truncate"
                             >
                               @{item.handle}
                             </Link>
                             {item.frozen ? (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-500 dark:text-rose-300 border border-rose-500/30">
                                 Frozen
                               </span>
                             ) : (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                                 Active
                               </span>
                             )}
@@ -357,7 +357,7 @@ export default function CommunityPage() {
                       <div className="flex items-center gap-2 shrink-0">
                         <Link
                           href={`/send?to=@${item.handle}`}
-                          className="px-2.5 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/35 border border-indigo-500/30 text-indigo-300 hover:text-white text-xs font-bold flex items-center gap-1 transition-all active:scale-95"
+                          className="px-2.5 py-1.5 rounded-xl bg-indigo-600/10 dark:bg-indigo-600/20 hover:bg-indigo-600/25 dark:hover:bg-indigo-600/35 border border-indigo-500/30 text-indigo-600 dark:text-indigo-300 hover:text-indigo-700 dark:hover:text-white text-xs font-bold flex items-center gap-1 transition-all active:scale-95"
                           title="Send SOL to this handle"
                         >
                           <Send size={12} />
@@ -365,7 +365,7 @@ export default function CommunityPage() {
                         </Link>
                         <Link
                           href={`/handle/${item.handle}`}
-                          className="p-1.5 rounded-xl bg-white/4 hover:bg-white/8 text-slate-400 hover:text-white transition-colors"
+                          className="p-1.5 rounded-xl bg-(--bg-subtle) hover:bg-(--bg-card-hover) border border-(--border) text-(--text-muted) hover:text-foreground transition-colors"
                           title="View public profile"
                         >
                           <ExternalLink size={13} />
@@ -377,7 +377,7 @@ export default function CommunityPage() {
 
                 {/* Pagination Controls */}
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-between pt-3 border-t border-white/10 text-xs">
+                  <div className="flex items-center justify-between pt-3 border-t border-(--border) text-xs">
                     <button
                       type="button"
                       onClick={() => {
@@ -385,12 +385,12 @@ export default function CommunityPage() {
                         setCurrentPage((p) => Math.max(1, p - 1));
                       }}
                       disabled={currentPage === 1}
-                      className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1 transition-colors cursor-pointer"
+                      className="px-3 py-1.5 rounded-xl bg-(--bg-subtle) hover:bg-(--bg-card-hover) border border-(--border) text-(--text-secondary) disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1 transition-colors cursor-pointer"
                     >
                       <ChevronLeft size={13} /> Prev
                     </button>
 
-                    <span className="text-slate-400 font-mono text-[11px]">
+                    <span className="text-(--text-muted) font-mono text-[11px]">
                       Page {currentPage} of {totalPages}
                     </span>
 
@@ -401,7 +401,7 @@ export default function CommunityPage() {
                         setCurrentPage((p) => Math.min(totalPages, p + 1));
                       }}
                       disabled={currentPage === totalPages}
-                      className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1 transition-colors cursor-pointer"
+                      className="px-3 py-1.5 rounded-xl bg-(--bg-subtle) hover:bg-(--bg-card-hover) border border-(--border) text-(--text-secondary) disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1 transition-colors cursor-pointer"
                     >
                       Next <ChevronRight size={13} />
                     </button>
@@ -419,21 +419,21 @@ export default function CommunityPage() {
                 <Card key={item.id} className="p-4.5">
                   <div className="flex items-start gap-3.5">
                     <div
-                      className={`w-10 h-10 rounded-xl ${item.iconBg} border flex items-center justify-center shrink-0 shadow-sm`}
+                      className={`w-10 h-10 rounded-xl ${item.iconBg} border flex items-center justify-center shrink-0 shadow-xs`}
                     >
                       <Icon size={18} className={item.iconColor} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
                         <StatusBadge status={item.badgeStatus}>{item.badge}</StatusBadge>
-                        <span className="text-[11px] text-slate-400 font-medium">
+                        <span className="text-[11px] text-(--text-muted) font-medium">
                           {item.date}
                         </span>
                       </div>
-                      <div className="text-sm font-bold text-white mb-1 leading-snug">
+                      <div className="text-sm font-bold text-foreground mb-1 leading-snug">
                         {item.title}
                       </div>
-                      <div className="text-xs text-slate-300 leading-relaxed">
+                      <div className="text-xs text-(--text-secondary) leading-relaxed">
                         {item.body}
                       </div>
                       {item.link && (
@@ -441,7 +441,7 @@ export default function CommunityPage() {
                           href={item.link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 mt-2.5 text-xs font-bold text-indigo-400 hover:text-indigo-300"
+                          className="inline-flex items-center gap-1 mt-2.5 text-xs font-bold text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300"
                         >
                           {item.linkLabel} <ExternalLink size={12} />
                         </a>
@@ -453,18 +453,18 @@ export default function CommunityPage() {
             })}
 
             {/* Smart Contract Card */}
-            <Card className="p-4 flex flex-col gap-2 bg-[#121626]/40">
-              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+            <Card className="p-4 flex flex-col gap-2">
+              <div className="text-[11px] font-bold text-(--text-muted) uppercase tracking-wider">
                 Verified Smart Contract
               </div>
-              <div className="text-xs text-slate-300 leading-relaxed font-mono break-all bg-white/3 p-2.5 rounded-xl border border-white/6">
+              <div className="text-xs text-(--text-secondary) leading-relaxed font-mono break-all bg-(--bg-subtle) p-2.5 rounded-xl border border-(--border)">
                 {PROGRAM_ID.toBase58()}
               </div>
               <a
                 href={`https://explorer.solana.com/address/${PROGRAM_ID.toBase58()}?cluster=devnet`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-semibold mt-1"
+                className="text-xs text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 flex items-center gap-1 font-semibold mt-1"
               >
                 Inspect on Solana Explorer <ExternalLink size={12} />
               </a>

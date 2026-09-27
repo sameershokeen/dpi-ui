@@ -41,13 +41,15 @@
   --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
 }
 
-:root[data-theme="light"] {
+:root[data-theme="light"],
+html.light,
+[data-theme="light"] {
   --bg-base: #F8FAFC;
-  --bg-subtle: #EDF2F7;
-  --bg-card: rgba(255, 255, 255, 0.9);
-  --bg-card-hover: rgba(241, 245, 249, 0.95);
-  --bg-glass: rgba(255, 255, 255, 0.85);
-  --bg-glass-strong: rgba(255, 255, 255, 0.95);
+  --bg-subtle: #F1F5F9;
+  --bg-card: rgba(255, 255, 255, 0.94);
+  --bg-card-hover: rgba(248, 250, 252, 0.98);
+  --bg-glass: rgba(255, 255, 255, 0.88);
+  --bg-glass-strong: rgba(255, 255, 255, 0.96);
   --bg-elevated: #FFFFFF;
 
   --border: rgba(0, 0, 0, 0.12);
@@ -60,7 +62,7 @@
   --text-secondary: #334155;
   --text-muted: #64748B;
 
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.12);
   --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
@@ -252,4 +254,132 @@ html, body {
   animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
   animation-fill-mode: forwards;
 }
+
+/* ==========================================================================
+   Light Mode Overrides & Adaptations
+   ========================================================================== */
+
+/* Solana Wallet Adapter in Light Mode */
+[data-theme="light"] .wallet-adapter-modal-wrapper,
+html.light .wallet-adapter-modal-wrapper {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15) !important;
+}
+
+[data-theme="light"] .wallet-adapter-modal-title,
+html.light .wallet-adapter-modal-title {
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .wallet-adapter-modal-list .wallet-adapter-button,
+html.light .wallet-adapter-modal-list .wallet-adapter-button {
+  background: #F1F5F9 !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .wallet-adapter-modal-list .wallet-adapter-button:hover,
+html.light .wallet-adapter-modal-list .wallet-adapter-button:hover {
+  background: rgba(99, 102, 241, 0.12) !important;
+  border-color: rgba(99, 102, 241, 0.4) !important;
+  color: #4338CA !important;
+}
+
+[data-theme="light"] .wallet-adapter-modal-button-close,
+html.light .wallet-adapter-modal-button-close {
+  background: rgba(0, 0, 0, 0.06) !important;
+  color: #64748B !important;
+}
+
+/* Light Mode Background & Ambient Glow */
+[data-theme="light"] .bg-grid-pattern,
+html.light .bg-grid-pattern {
+  background-image: radial-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+}
+
+[data-theme="light"] .ambient-glow-top,
+html.light .ambient-glow-top {
+  background: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.12) 0%, rgba(168, 85, 247, 0.06) 35%, transparent 70%);
+}
+
+[data-theme="light"] .ambient-glow-bottom,
+html.light .ambient-glow-bottom {
+  background: radial-gradient(circle at 80% 100%, rgba(236, 72, 153, 0.08) 0%, rgba(245, 158, 11, 0.05) 30%, transparent 60%);
+}
+
+/* Modal, Sheet & Card Elevations in Light Mode */
+[data-theme="light"] div[class*="bg-[#111827]"],
+[data-theme="light"] div[class*="bg-[#0d1222]"],
+[data-theme="light"] div[class*="bg-[#0D1220]"],
+[data-theme="light"] div[class*="bg-[#12182B]"],
+[data-theme="light"] div[class*="bg-[#080B14]"],
+[data-theme="light"] div[class*="bg-[#0c101d]"],
+[data-theme="light"] div[class*="bg-[#0a0f1e]"],
+html.light div[class*="bg-[#111827]"],
+html.light div[class*="bg-[#0d1222]"],
+html.light div[class*="bg-[#0D1220]"],
+html.light div[class*="bg-[#12182B]"],
+html.light div[class*="bg-[#080B14]"],
+html.light div[class*="bg-[#0c101d]"],
+html.light div[class*="bg-[#0a0f1e]"] {
+  background-color: #FFFFFF !important;
+  color: var(--text-primary) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+[data-theme="light"] .skeleton-shimmer,
+html.light .skeleton-shimmer {
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.03) 0%, rgba(0, 0, 0, 0.08) 50%, rgba(0, 0, 0, 0.03) 100%);
+  background-size: 200% 100%;
+}
+
+/* Readable Text Contrast in Light Mode */
+[data-theme="light"] .text-slate-400,
+html.light .text-slate-400 {
+  color: #64748B !important;
+}
+
+[data-theme="light"] .text-slate-300,
+html.light .text-slate-300 {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .text-slate-200,
+html.light .text-slate-200 {
+  color: #334155 !important;
+}
+
+/* Form inputs & options in Light Mode */
+[data-theme="light"] select option,
+html.light select option,
+[data-theme="light"] select optgroup,
+html.light select optgroup {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+}
+
+[data-theme="light"] input:not([type="checkbox"]):not([type="radio"]),
+html.light input:not([type="checkbox"]):not([type="radio"]),
+[data-theme="light"] textarea,
+html.light textarea {
+  color: #0F172A !important;
+}
+
+[data-theme="light"] input::placeholder,
+html.light input::placeholder,
+[data-theme="light"] textarea::placeholder,
+html.light textarea::placeholder {
+  color: #94A3B8 !important;
+}
+
+/* Modal overlay in Light Mode */
+[data-theme="light"] .fixed.inset-0.bg-black\/80,
+[data-theme="light"] .fixed.inset-0.bg-black\/70,
+html.light .fixed.inset-0.bg-black\/80,
+html.light .fixed.inset-0.bg-black\/70 {
+  background-color: rgba(15, 23, 42, 0.45) !important;
+}
+
+
 

@@ -401,7 +401,7 @@ export default function HistoryPage() {
 
       <div className="px-4 py-4 flex flex-col gap-4">
         {/* Tab Switcher */}
-        <div className="grid grid-cols-2 p-1 rounded-2xl bg-white/4 border border-white/8 text-xs font-bold">
+        <div className="grid grid-cols-2 p-1 rounded-2xl bg-(--bg-subtle) border border-(--border) text-xs font-bold">
           <button
             onClick={() => {
               triggerHaptic("selection");
@@ -410,7 +410,7 @@ export default function HistoryPage() {
             className={`py-2 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
               activeTab === "wallet"
                 ? "bg-indigo-600 text-white shadow-md"
-                : "text-slate-400 hover:text-white"
+                : "text-(--text-muted) hover:text-foreground"
             }`}
           >
             <Clock size={13} />
@@ -424,7 +424,7 @@ export default function HistoryPage() {
             className={`py-2 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
               activeTab === "protocol"
                 ? "bg-indigo-600 text-white shadow-md"
-                : "text-slate-400 hover:text-white"
+                : "text-(--text-muted) hover:text-foreground"
             }`}
           >
             <Activity size={13} />
@@ -434,8 +434,8 @@ export default function HistoryPage() {
 
         {/* Search Bar & Refresh */}
         <div className="flex items-center gap-2">
-          <div className="flex-1 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/4 border border-white/10 text-xs">
-            <Search size={14} className="text-slate-400" />
+          <div className="flex-1 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-(--bg-subtle) border border-(--border) text-xs">
+            <Search size={14} className="text-(--text-muted)" />
             <input
               type="text"
               placeholder={
@@ -445,7 +445,7 @@ export default function HistoryPage() {
               }
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-slate-500 font-medium"
+              className="flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-(--text-muted) font-medium"
             />
           </div>
           <button
@@ -455,7 +455,7 @@ export default function HistoryPage() {
               else fetchProtocolFeed();
             }}
             disabled={loading || loadingProtocol}
-            className="w-10 h-10 rounded-xl bg-white/4 border border-white/10 hover:bg-white/8 active:scale-95 flex items-center justify-center text-slate-300 transition-all cursor-pointer"
+            className="w-10 h-10 rounded-xl bg-(--bg-subtle) border border-(--border) hover:bg-(--bg-card-hover) active:scale-95 flex items-center justify-center text-(--text-secondary) hover:text-foreground transition-all cursor-pointer"
             title="Refresh transactions"
           >
             <RefreshCw
@@ -469,7 +469,7 @@ export default function HistoryPage() {
         {activeTab === "wallet" && connected && (
           <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
             {/* Direction filter pills */}
-            <div className="flex items-center gap-1 p-1 rounded-xl bg-white/4 border border-white/8 text-[11px] font-bold">
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-(--bg-subtle) border border-(--border) text-[11px] font-bold">
               {(["all", "send", "receive"] as const).map((dir) => (
                 <button
                   key={dir}
@@ -481,7 +481,7 @@ export default function HistoryPage() {
                   className={`px-2.5 py-1 rounded-lg transition-all capitalize cursor-pointer ${
                     directionFilter === dir
                       ? "bg-indigo-600 text-white shadow-sm"
-                      : "text-slate-400 hover:text-white"
+                      : "text-(--text-muted) hover:text-foreground"
                   }`}
                 >
                   {dir === "all" ? "All" : dir === "send" ? "Sent" : "Received"}
@@ -497,20 +497,20 @@ export default function HistoryPage() {
                   triggerHaptic("tap");
                   setTokenFilter(e.target.value);
                 }}
-                className="px-2.5 py-1.5 rounded-xl bg-white/4 border border-white/8 text-[11px] font-bold text-slate-300 outline-none cursor-pointer"
+                className="px-2.5 py-1.5 rounded-xl bg-(--bg-subtle) border border-(--border) text-[11px] font-bold text-(--text-secondary) outline-none cursor-pointer"
               >
-                <option value="all" className="bg-[#121626]">All Tokens</option>
-                <option value="SOL" className="bg-[#121626]">SOL</option>
-                <option value="USDC" className="bg-[#121626]">USDC</option>
-                <option value="EURC" className="bg-[#121626]">EURC</option>
-                <option value="PYUSD" className="bg-[#121626]">PYUSD</option>
+                <option value="all">All Tokens</option>
+                <option value="SOL">SOL</option>
+                <option value="USDC">USDC</option>
+                <option value="EURC">EURC</option>
+                <option value="PYUSD">PYUSD</option>
               </select>
 
               {/* Export CSV button (FEAT-010) */}
               <button
                 type="button"
                 onClick={exportHistoryCSV}
-                className="px-2.5 py-1.5 rounded-xl bg-white/4 hover:bg-white/8 border border-white/8 text-[11px] font-bold text-indigo-300 hover:text-white flex items-center gap-1 transition-all cursor-pointer active:scale-95"
+                className="px-2.5 py-1.5 rounded-xl bg-(--bg-subtle) hover:bg-(--bg-card-hover) border border-(--border) text-[11px] font-bold text-indigo-500 dark:text-indigo-300 hover:text-indigo-600 dark:hover:text-white flex items-center gap-1 transition-all cursor-pointer active:scale-95"
                 title="Export transactions as CSV"
               >
                 <Download size={13} />
@@ -531,7 +531,7 @@ export default function HistoryPage() {
           ) : (
             <PullToRefresh onRefresh={() => fetchHistory(false)}>
               {errorMsg && (
-                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs text-center mb-3">
+                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-500 dark:text-rose-400 text-xs text-center mb-3">
                   {errorMsg}
                 </div>
               )}
@@ -540,10 +540,10 @@ export default function HistoryPage() {
                 <div className="flex flex-col gap-2.5">
                   {[1, 2, 3, 4].map((i) => (
                     <Card key={i} className="p-4 flex items-center gap-3 animate-pulse">
-                      <div className="w-10 h-10 rounded-xl bg-white/10" />
+                      <div className="w-10 h-10 rounded-xl bg-(--bg-subtle)" />
                       <div className="flex-1 flex flex-col gap-2">
-                        <div className="h-3 w-28 bg-white/10 rounded" />
-                        <div className="h-2 w-20 bg-white/5 rounded" />
+                        <div className="h-3 w-28 bg-(--bg-subtle) rounded" />
+                        <div className="h-2 w-20 bg-(--bg-subtle)/70 rounded" />
                       </div>
                     </Card>
                   ))}
@@ -562,7 +562,7 @@ export default function HistoryPage() {
                 />
               ) : (
                 <>
-                  <Card className="overflow-hidden divide-y divide-white/6">
+                  <Card className="overflow-hidden divide-y divide-(--border)">
                   {filteredTxs.map((tx) => {
                     const isOutgoing = tx.type === "send";
                     const isIncoming = tx.type === "receive";
@@ -571,18 +571,18 @@ export default function HistoryPage() {
                     return (
                       <div
                         key={tx.signature}
-                        className="p-4 flex items-center justify-between hover:bg-white/2 transition-colors"
+                        className="p-4 flex items-center justify-between hover:bg-(--bg-subtle) transition-colors"
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <div
                             className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
                               isOutgoing
-                                ? "bg-rose-500/10 border-rose-500/20 text-rose-400"
+                                ? "bg-rose-500/10 border-rose-500/20 text-rose-500 dark:text-rose-400"
                                 : isIncoming
-                                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500 dark:text-emerald-400"
                                 : isDpi
-                                ? "bg-indigo-500/15 border-indigo-500/30 text-indigo-400"
-                                : "bg-white/5 border-white/10 text-slate-400"
+                                ? "bg-indigo-500/15 border-indigo-500/30 text-indigo-500 dark:text-indigo-400"
+                                : "bg-(--bg-subtle) border-(--border) text-(--text-muted)"
                             }`}
                           >
                             {isOutgoing ? (
@@ -597,11 +597,11 @@ export default function HistoryPage() {
                           </div>
 
                           <div className="min-w-0">
-                            <div className="text-xs font-bold text-white truncate">
+                            <div className="text-xs font-bold text-foreground truncate">
                               {isOutgoing ? (
                                 <>
                                   Sent {tx.tokenSymbol || "SOL"} to{" "}
-                                  <span className="text-indigo-300 font-mono">
+                                  <span className="text-indigo-600 dark:text-indigo-300 font-mono font-semibold">
                                     {tx.counterpartyHandle
                                       ? `@${tx.counterpartyHandle}`
                                       : `${tx.counterparty?.slice(0, 4)}...${tx.counterparty?.slice(-4)}`}
@@ -610,7 +610,7 @@ export default function HistoryPage() {
                               ) : isIncoming ? (
                                 <>
                                   Received from{" "}
-                                  <span className="text-emerald-300 font-mono">
+                                  <span className="text-emerald-600 dark:text-emerald-300 font-mono font-semibold">
                                     {tx.counterpartyHandle
                                       ? `@${tx.counterpartyHandle}`
                                       : `${tx.counterparty?.slice(0, 4)}...${tx.counterparty?.slice(-4)}`}
@@ -622,7 +622,7 @@ export default function HistoryPage() {
                                 "Solana Program Call"
                               )}
                             </div>
-                            <div className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1.5 font-mono">
+                            <div className="text-[10px] text-(--text-muted) mt-0.5 flex items-center gap-1.5 font-mono">
                               <span>{formatDate(tx.blockTime)}</span>
                               <span>·</span>
                               <span>Slot {tx.slot}</span>
@@ -635,13 +635,13 @@ export default function HistoryPage() {
                             <div className="text-right">
                               <div
                                 className={`text-xs font-black font-mono ${
-                                  isIncoming ? "text-emerald-400" : "text-white"
+                                  isIncoming ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
                                 }`}
                               >
                                 {isIncoming ? "+" : "-"}
                                 {tx.amount.toFixed(3)}
                               </div>
-                              <div className="text-[10px] text-slate-500 font-medium">
+                              <div className="text-[10px] text-(--text-muted) font-medium">
                                 {tx.tokenSymbol || "SOL"}
                               </div>
                             </div>
@@ -660,7 +660,7 @@ export default function HistoryPage() {
                                 timestamp: formatDate(tx.blockTime),
                               });
                             }}
-                            className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-indigo-400 transition-all cursor-pointer"
+                            className="w-8 h-8 rounded-lg bg-(--bg-subtle) hover:bg-(--bg-card-hover) border border-(--border) flex items-center justify-center text-(--text-muted) hover:text-indigo-500 dark:hover:text-indigo-400 transition-all cursor-pointer"
                             title="Download Receipt (PNG)"
                           >
                             <Receipt size={13} />
@@ -669,7 +669,7 @@ export default function HistoryPage() {
                             href={getExplorerUrl("tx", tx.signature, network)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all"
+                            className="w-8 h-8 rounded-lg bg-(--bg-subtle) hover:bg-(--bg-card-hover) border border-(--border) flex items-center justify-center text-(--text-muted) hover:text-foreground transition-all"
                             title="View on Solana Explorer"
                           >
                             <ExternalLink size={12} />
@@ -689,7 +689,7 @@ export default function HistoryPage() {
                         fetchHistory(true);
                       }}
                       disabled={loadingMore}
-                      className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 hover:text-white flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                      className="px-4 py-2 rounded-xl bg-(--bg-subtle) hover:bg-(--bg-card-hover) border border-(--border) text-xs font-semibold text-(--text-secondary) hover:text-foreground flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
                     >
                       {loadingMore ? (
                         <>
@@ -712,21 +712,21 @@ export default function HistoryPage() {
             {loadingProtocol && protocolTxs.length === 0 ? (
               <Card className="p-8 text-center flex flex-col items-center justify-center gap-2">
                 <RefreshCw size={20} className="animate-spin text-indigo-400" />
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-(--text-muted)">
                   Fetching recent transactions on DPI Program…
                 </span>
               </Card>
             ) : filteredProtocolTxs.length === 0 ? (
               <Card className="p-8 text-center flex flex-col items-center gap-2">
-                <Activity size={20} className="text-slate-500" />
-                <div className="text-xs font-bold text-white">No protocol activity found</div>
-                <div className="text-[11px] text-slate-500">
+                <Activity size={20} className="text-(--text-muted)" />
+                <div className="text-xs font-bold text-foreground">No protocol activity found</div>
+                <div className="text-[11px] text-(--text-muted)">
                   Transaction signatures executed on {PROGRAM_ID.toBase58().slice(0, 8)}... will
                   appear here in real time.
                 </div>
               </Card>
             ) : (
-              <Card className="overflow-hidden divide-y divide-white/6">
+              <Card className="overflow-hidden divide-y divide-(--border)">
                 {filteredProtocolTxs.map((ptx) => {
                   const shortSig = `${ptx.signature.slice(0, 10)}...${ptx.signature.slice(-8)}`;
                   const isCopied = copiedSig === ptx.signature;
@@ -734,28 +734,28 @@ export default function HistoryPage() {
                   return (
                     <div
                       key={ptx.signature}
-                      className="p-3.5 flex items-center justify-between gap-3 hover:bg-white/2 transition-colors"
+                      className="p-3.5 flex items-center justify-between gap-3 hover:bg-(--bg-subtle) transition-colors"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
+                        <div className="w-8 h-8 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-500 dark:text-indigo-400 shrink-0">
                           <Zap size={14} />
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
-                            <span className="font-mono text-xs font-bold text-white truncate">
+                            <span className="font-mono text-xs font-bold text-foreground truncate">
                               {shortSig}
                             </span>
                             {ptx.err ? (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-500 dark:text-rose-400 border border-rose-500/30">
                                 Failed
                               </span>
                             ) : (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                                 Confirmed
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono">
+                          <div className="flex items-center gap-2 text-[10px] text-(--text-muted) font-mono">
                             <span>{ptx.blockTime}</span>
                             <span>·</span>
                             <span>Slot {ptx.slot}</span>
@@ -766,11 +766,11 @@ export default function HistoryPage() {
                       <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           onClick={() => copySignature(ptx.signature)}
-                          className="p-1.5 rounded-lg bg-white/4 hover:bg-white/8 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg bg-(--bg-subtle) hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-foreground transition-colors cursor-pointer"
                           title="Copy transaction signature"
                         >
                           {isCopied ? (
-                            <CheckCircle size={13} className="text-emerald-400" />
+                            <CheckCircle size={13} className="text-emerald-500 dark:text-emerald-400" />
                           ) : (
                             <Copy size={13} />
                           )}
@@ -779,8 +779,8 @@ export default function HistoryPage() {
                           href={ptx.explorerUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-1.5 rounded-lg bg-white/4 hover:bg-white/8 text-slate-400 hover:text-white transition-colors"
-                          title="Inspect on Solana Explorer"
+                          className="p-1.5 rounded-lg bg-(--bg-subtle) hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-foreground transition-colors"
+                          title="View on Solana Explorer"
                         >
                           <ExternalLink size={13} />
                         </a>

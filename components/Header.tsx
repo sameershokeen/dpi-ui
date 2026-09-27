@@ -60,25 +60,25 @@ export default function Header({
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-[var(--bg-base)]/85 backdrop-blur-xl border-b border-white/6 px-4 py-3 flex items-center justify-between gap-3 transition-colors">
+      <header className="sticky top-0 z-40 bg-(--bg-base)/85 backdrop-blur-xl border-b border-(--border) px-4 py-3 flex items-center justify-between gap-3 transition-colors">
         <div className="flex items-center gap-3">
           {showBack && (
             <button
               onClick={onBack}
-              className="w-9 h-9 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 active:scale-95 flex items-center justify-center cursor-pointer text-white/80 transition-all"
+              className="w-9 h-9 rounded-xl border border-(--border) bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 active:scale-95 flex items-center justify-center cursor-pointer text-(--text-secondary) hover:text-foreground transition-all"
               aria-label="Back"
             >
               <ChevronLeft size={18} />
             </button>
           )}
           {title ? (
-            <h1 className="text-lg font-bold text-white tracking-tight">
+            <h1 className="text-lg font-bold text-foreground tracking-tight">
               {title}
             </h1>
           ) : (
             <Link href="/" className="flex items-center gap-2.5 group">
               {/* Official DPI Logo Mark */}
-              <div className="relative w-8 h-8 rounded-xl overflow-hidden shadow-lg shadow-indigo-500/25 group-hover:scale-105 border border-indigo-500/30 transition-transform bg-[#090B10] shrink-0">
+              <div className="relative w-8 h-8 rounded-xl overflow-hidden shadow-lg shadow-indigo-500/25 group-hover:scale-105 border border-indigo-500/30 transition-transform bg-white dark:bg-[#090B10] shrink-0">
                 <Image
                   src="/dpi-icon-square.png"
                   alt="DPI"
@@ -89,7 +89,7 @@ export default function Header({
                 />
               </div>
               <div>
-                <div className="text-sm font-extrabold text-white leading-none tracking-tight">
+                <div className="text-sm font-extrabold text-foreground leading-none tracking-tight">
                   DPI
                 </div>
                 <button
@@ -100,7 +100,7 @@ export default function Header({
                     triggerHaptic("tap");
                     setNetworkModalOpen(true);
                   }}
-                  className="text-[10px] text-indigo-300 hover:text-white font-semibold leading-none mt-1 flex items-center gap-1.5 px-1.5 py-0.5 rounded-full bg-white/4 border border-white/8 hover:bg-white/10 transition-colors cursor-pointer"
+                  className="text-[10px] text-indigo-600 dark:text-indigo-300 hover:text-indigo-700 dark:hover:text-white font-semibold leading-none mt-1 flex items-center gap-1.5 px-1.5 py-0.5 rounded-full bg-black/5 dark:bg-white/5 border border-(--border) transition-colors cursor-pointer"
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${currentConfig.badgeColor} animate-pulse`} />
                   <span>{currentConfig.label}</span>
@@ -116,10 +116,10 @@ export default function Header({
             <Link
               href="/admin"
               onClick={() => triggerHaptic("tap")}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/40 text-[11px] font-bold text-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.3)] transition-all animate-pulse"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/40 text-[11px] font-bold text-purple-600 dark:text-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.3)] transition-all animate-pulse"
               title="DPI Protocol Admin Console"
             >
-              <ShieldCheck size={13} className="text-purple-300" />
+              <ShieldCheck size={13} className="text-purple-600 dark:text-purple-300" />
               <span className="hidden sm:inline">Admin</span>
             </Link>
           )}
@@ -128,14 +128,14 @@ export default function Header({
           <button
             type="button"
             onClick={toggleTheme}
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
+            className="p-2 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border border-(--border) text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
             title={`Switch to ${resolvedTheme === "dark" ? "Light" : "Dark"} mode`}
             aria-label="Toggle Theme"
           >
             {resolvedTheme === "dark" ? (
               <Sun size={15} className="text-amber-300" />
             ) : (
-              <Moon size={15} className="text-indigo-400" />
+              <Moon size={15} className="text-indigo-600" />
             )}
           </button>
 
@@ -146,7 +146,7 @@ export default function Header({
               triggerHaptic("tap");
               setNotifModalOpen(true);
             }}
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
+            className="p-2 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border border-(--border) text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
             title="Notification & Sound Preferences"
             aria-label="Notification Preferences"
           >
@@ -160,7 +160,7 @@ export default function Header({
                 triggerHaptic("tap");
                 setNetworkModalOpen(true);
               }}
-              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
+              className="p-2 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border border-(--border) text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
               title="Change Solana Network"
             >
               <Globe size={15} />

@@ -163,7 +163,7 @@ function LandingView() {
         </div>
 
         {/* Official DPI Logo mark */}
-        <div className="relative w-24 h-24 rounded-3xl overflow-hidden mx-auto mb-5 shadow-[0_0_50px_rgba(99,102,241,0.45)] border-2 border-indigo-500/40 bg-[#090B10]">
+        <div className="relative w-24 h-24 rounded-3xl overflow-hidden mx-auto mb-5 shadow-[0_0_50px_rgba(99,102,241,0.45)] border-2 border-indigo-500/40 bg-white dark:bg-[#090B10]">
           <Image
             src="/dpi-icon-square.png"
             alt="DPI Protocol"
@@ -174,27 +174,27 @@ function LandingView() {
           />
         </div>
 
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight mb-3">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight leading-tight mb-3">
           Take Control of Your <br />
-          <span className="bg-linear-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">
+          <span className="bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
             Web3 Identity
           </span>
         </h1>
 
-        <p className="text-xs sm:text-sm text-slate-300 max-w-xs mx-auto leading-relaxed mb-5">
+        <p className="text-xs sm:text-sm text-(--text-secondary) max-w-xs mx-auto leading-relaxed mb-5">
           Privacy like crypto. Simplicity like UPI. Send & receive tokens using human-readable @handles on Solana.
         </p>
 
         {/* Quick Handle Search Bar */}
         <form onSubmit={handleSearchSubmit} className="max-w-xs mx-auto mb-5">
-          <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-[#12182B] border border-indigo-500/40 shadow-lg shadow-indigo-500/10">
-            <span className="text-sm font-black text-indigo-400">@</span>
+          <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-(--bg-card) border border-indigo-500/40 shadow-lg shadow-indigo-500/10">
+            <span className="text-sm font-black text-indigo-500">@</span>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="check handle availability..."
-              className="flex-1 bg-transparent border-none outline-none text-xs text-white placeholder:text-slate-500 font-medium"
+              className="flex-1 bg-transparent border-none outline-none text-xs text-foreground placeholder:text-(--text-muted) font-medium"
             />
             <button
               type="submit"
@@ -211,13 +211,13 @@ function LandingView() {
       </div>
 
       {/* Ecosystem Metrics Widget */}
-      <Card className="p-5 border-indigo-500/30 bg-linear-to-b from-[#141C2E]/90 to-[#0F1524]/90">
+      <Card className="p-5 border-indigo-500/30">
         <div className="flex items-center justify-between mb-4">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <TrendingUp size={14} className="text-indigo-400" />
+          <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted) flex items-center gap-1.5">
+            <TrendingUp size={14} className="text-indigo-500 dark:text-indigo-400" />
             Ecosystem Metrics
           </span>
-          <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/30">
+          <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/30">
             Devnet 100% Live
           </span>
         </div>
@@ -230,10 +230,10 @@ function LandingView() {
           ].map((item) => (
             <div key={item.label} className="flex flex-col gap-1.5">
               <div className="flex justify-between text-xs font-semibold">
-                <span className="text-slate-300">{item.label}</span>
-                <span className="font-bold text-white font-mono">{item.percent}</span>
+                <span className="text-(--text-secondary)">{item.label}</span>
+                <span className="font-bold text-foreground font-mono">{item.percent}</span>
               </div>
-              <div className="h-1.5 w-full bg-white/8 rounded-full overflow-hidden">
+              <div className="h-1.5 w-full bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
                 <div className={`h-full bg-linear-to-r ${item.color} rounded-full`} style={{ width: item.barWidth }} />
               </div>
             </div>
@@ -293,8 +293,8 @@ function LandingView() {
                   <Icon size={20} className={iconColor} />
                 </div>
                 <div className="flex-1">
-                  <div className="font-bold text-sm text-white mb-0.5">{title}</div>
-                  <div className="text-xs text-slate-300 leading-relaxed">{desc}</div>
+                  <div className="font-bold text-sm text-foreground mb-0.5">{title}</div>
+                  <div className="text-xs text-(--text-secondary) leading-relaxed">{desc}</div>
                 </div>
               </div>
             </Card>
@@ -302,7 +302,7 @@ function LandingView() {
         ))}
       </div>
 
-      <div className="text-center py-4 text-xs text-slate-400">
+      <div className="text-center py-4 text-xs text-(--text-muted)">
         Running on Solana Devnet ·{" "}
         <a
           href="https://explorer.solana.com/address/CEyRA234cQ3u3KCjE2tRzobZQg7GgyhQBL11JTWA9WVc?cluster=devnet"
@@ -442,16 +442,16 @@ function ConnectedView({
         }}
       >
       {/* Main Balance Card */}
-      <div className="relative rounded-3xl p-6 bg-linear-to-br from-indigo-950 via-[#161E36] to-[#0E1322] border-2 border-indigo-400/40 shadow-[0_12px_45px_rgba(99,102,241,0.35)] overflow-hidden backdrop-blur-2xl">
+      <div className="relative rounded-3xl p-6 bg-linear-to-br from-indigo-100 via-purple-50 to-white dark:from-indigo-950 dark:via-[#161E36] dark:to-[#0E1322] border-2 border-indigo-400/40 shadow-[0_12px_45px_rgba(99,102,241,0.35)] overflow-hidden backdrop-blur-2xl">
         <div className="absolute -top-12 -right-12 w-48 h-48 bg-indigo-500/35 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-purple-500/25 rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
+          <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-300 flex items-center gap-1.5">
             <CreditCard size={14} />
             Available Balance
           </span>
-          <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-indigo-500/25 text-indigo-300 border border-indigo-400/40 font-bold">
+          <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-indigo-500/25 text-indigo-700 dark:text-indigo-300 border border-indigo-400/40 font-bold">
             Devnet
           </span>
         </div>
@@ -460,25 +460,25 @@ function ConnectedView({
         <AnimatedBalance value={balance} decimals={4} symbol="SOL" className="mb-1" />
 
         {/* FEAT-009: USD Price equivalent & total portfolio */}
-        <div className="text-xs font-semibold text-slate-300 font-mono mb-3 flex items-center gap-2">
+        <div className="text-xs font-semibold text-(--text-secondary) font-mono mb-3 flex items-center gap-2">
           <span className="text-emerald-400">≈ {formatUsd(balance, "SOL")} USD</span>
           {tokens.length > 0 && (
             <>
-              <span className="text-slate-500">·</span>
-              <span className="text-indigo-300 font-medium">Portfolio: ${totalPortfolioUsd.toFixed(2)}</span>
+              <span className="text-(--text-muted)">·</span>
+              <span className="text-indigo-600 dark:text-indigo-300 font-medium">Portfolio: ${totalPortfolioUsd.toFixed(2)}</span>
             </>
           )}
         </div>
 
-        <div className="text-xs text-slate-300 flex items-center gap-1.5 mb-6">
+        <div className="text-xs text-(--text-secondary) flex items-center gap-1.5 mb-6">
           {handle ? (
             <>
-              <span className="font-bold text-white text-sm">@{handle}</span>
+              <span className="font-bold text-foreground text-sm">@{handle}</span>
               <span>·</span>
-              <span className="font-mono text-slate-300 font-medium">{shortKey}</span>
+              <span className="font-mono text-(--text-secondary) font-medium">{shortKey}</span>
             </>
           ) : (
-            <span className="font-mono text-slate-300 font-medium">{shortKey}</span>
+            <span className="font-mono text-(--text-secondary) font-medium">{shortKey}</span>
           )}
         </div>
 
@@ -486,9 +486,9 @@ function ConnectedView({
         <div className="grid grid-cols-2 gap-3 relative z-10">
           <Link
             href="/send"
-            className="flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 text-white text-sm font-bold transition-all shadow-md"
+            className="flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-black/10 hover:bg-black/15 dark:bg-white/10 dark:hover:bg-white/20 active:scale-95 border border-black/15 dark:border-white/20 text-foreground text-sm font-bold transition-all shadow-md"
           >
-            <ArrowUpRight size={18} className="text-emerald-400" />
+            <ArrowUpRight size={18} className="text-emerald-600 dark:text-emerald-400" />
             Send Asset
           </Link>
           <button
@@ -496,43 +496,43 @@ function ConnectedView({
               triggerHaptic("selection");
               onRequestPayment();
             }}
-            className="flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 text-white text-sm font-bold transition-all shadow-md cursor-pointer"
+            className="flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-black/10 hover:bg-black/15 dark:bg-white/10 dark:hover:bg-white/20 active:scale-95 border border-black/15 dark:border-white/20 text-foreground text-sm font-bold transition-all shadow-md cursor-pointer"
           >
-            <ArrowDownLeft size={18} className="text-indigo-300" />
+            <ArrowDownLeft size={18} className="text-indigo-600 dark:text-indigo-300" />
             Receive / Pay Link
           </button>
         </div>
       </div>
 
       {/* Handle Status Banner */}
-      <Card className="p-4 border-white/20">
+      <Card className="p-4 border-(--border)">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
               className={`w-11 h-11 rounded-xl flex items-center justify-center ${
                 handle
-                  ? "bg-indigo-500/25 text-indigo-300 border border-indigo-400/40"
-                  : "bg-white/5 text-slate-400 border border-white/10"
+                  ? "bg-indigo-500/25 text-indigo-500 dark:text-indigo-300 border border-indigo-400/40"
+                  : "bg-black/5 dark:bg-white/5 text-(--text-muted) border border-(--border)"
               }`}
             >
               <AtSign size={20} />
             </div>
             <div>
-              <div className="font-bold text-sm text-white">
+              <div className="font-bold text-sm text-foreground">
                 {loadingHandle
                   ? "Verifying on-chain..."
                   : handle
                   ? `@${handle}`
                   : "No @handle registered"}
               </div>
-              <div className="text-xs text-slate-300 mt-0.5">
+              <div className="text-xs text-(--text-muted) mt-0.5">
                 {handle ? "Active On-Chain Solana Identity" : "Check & claim your unique DPI handle"}
               </div>
             </div>
           </div>
           <Link
             href="/handle"
-            className="text-xs font-bold text-indigo-300 bg-indigo-500/20 hover:bg-indigo-500/30 active:scale-95 px-3.5 py-2 rounded-xl border border-indigo-400/40 transition-all"
+            className="text-xs font-bold text-indigo-600 dark:text-indigo-300 bg-indigo-500/15 dark:bg-indigo-500/20 hover:bg-indigo-500/25 active:scale-95 px-3.5 py-2 rounded-xl border border-indigo-400/40 transition-all"
           >
             {handle ? "Manage / Search" : "Search & Claim"}
           </Link>
@@ -547,20 +547,20 @@ function ConnectedView({
 
       {/* Admin Quick-Access Banner (when wallet is admin) */}
       {isAdmin && (
-        <Card className="p-4 border-purple-500/40 bg-linear-to-r from-purple-950/40 via-[#1a1230] to-indigo-950/40 shadow-lg shadow-purple-500/10">
+        <Card className="p-4 border-purple-500/40 bg-purple-500/5 dark:bg-linear-to-r dark:from-purple-950/40 dark:via-[#1a1230] dark:to-indigo-950/40 shadow-lg shadow-purple-500/10">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-purple-300 shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-purple-600 dark:text-purple-300 shrink-0">
                 <ShieldCheck size={20} />
               </div>
               <div>
-                <div className="text-sm font-bold text-white flex items-center gap-2">
+                <div className="text-sm font-bold text-foreground flex items-center gap-2">
                   Protocol Admin Console
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/30 text-purple-300 border border-purple-400/40 font-bold">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/30 text-purple-600 dark:text-purple-300 border border-purple-400/40 font-bold">
                     Admin
                   </span>
                 </div>
-                <div className="text-xs text-slate-300">
+                <div className="text-xs text-(--text-muted)">
                   Moderation, reservations, recovery & governance controls
                 </div>
               </div>
@@ -578,14 +578,14 @@ function ConnectedView({
       {/* Quick Access Navigation Grid */}
       <div className="grid grid-cols-2 gap-3">
         {[
-          { href: "/send", icon: Send, label: "Send Assets", color: "text-emerald-400", bg: "bg-emerald-500/15 border-emerald-500/30" },
-          { href: "/handle", icon: AtSign, label: "Handles & Search", color: "text-indigo-400", bg: "bg-indigo-500/15 border-indigo-500/30" },
-          { href: "/history", icon: History, label: "History & Receipts", color: "text-purple-400", bg: "bg-purple-500/15 border-purple-500/30" },
+          { href: "/send", icon: Send, label: "Send Assets", color: "text-emerald-500 dark:text-emerald-400", bg: "bg-emerald-500/15 border-emerald-500/30" },
+          { href: "/handle", icon: AtSign, label: "Handles & Search", color: "text-indigo-500 dark:text-indigo-400", bg: "bg-indigo-500/15 border-indigo-500/30" },
+          { href: "/history", icon: History, label: "History & Receipts", color: "text-purple-500 dark:text-purple-400", bg: "bg-purple-500/15 border-purple-500/30" },
           {
             href: handle ? `/handle/${handle}` : "/handle",
             icon: Globe,
             label: "Public Profile",
-            color: "text-amber-400",
+            color: "text-amber-500 dark:text-amber-400",
             bg: "bg-amber-500/15 border-amber-500/30",
           },
           ...(isAdmin
@@ -594,22 +594,22 @@ function ConnectedView({
                   href: "/admin",
                   icon: ShieldCheck,
                   label: "Admin Console",
-                  color: "text-purple-400",
+                  color: "text-purple-500 dark:text-purple-400",
                   bg: "bg-purple-500/15 border-purple-500/30",
                 },
               ]
             : []),
-          { href: "/community", icon: Users, label: "Community", color: "text-pink-400", bg: "bg-pink-500/15 border-pink-500/30" },
+          { href: "/community", icon: Users, label: "Community", color: "text-pink-500 dark:text-pink-400", bg: "bg-pink-500/15 border-pink-500/30" },
           {
             href: "https://explorer.solana.com/address/CEyRA234cQ3u3KCjE2tRzobZQg7GgyhQBL11JTWA9WVc?cluster=devnet",
             icon: Zap,
             label: "Solana Explorer",
-            color: "text-cyan-400",
+            color: "text-cyan-600 dark:text-cyan-400",
             bg: "bg-cyan-500/15 border-cyan-500/30",
             external: true,
           },
         ].map(({ href, icon: Icon, label, color, bg, external }) => (
-          <Card key={label} className="border-white/20 hover:border-white/30 transition-colors">
+          <Card key={label} className="border-(--border) hover:border-(--border-bright) transition-colors">
             <Link
               href={href}
               target={external ? "_blank" : undefined}
@@ -619,7 +619,7 @@ function ConnectedView({
               <div className={`w-10 h-10 rounded-xl ${bg} border flex items-center justify-center shadow-sm`}>
                 <Icon size={18} className={color} />
               </div>
-              <span className="text-sm font-bold text-white">{label}</span>
+              <span className="text-sm font-bold text-foreground">{label}</span>
             </Link>
           </Card>
         ))}
@@ -628,28 +628,28 @@ function ConnectedView({
       {/* Holdings Section */}
       <div>
         <div className="flex items-center justify-between mb-3 px-1">
-          <h2 className="text-sm font-bold text-white flex items-center gap-2">
-            <Coins size={16} className="text-indigo-400" />
+          <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+            <Coins size={16} className="text-indigo-500 dark:text-indigo-400" />
             Holdings & Assets
           </h2>
           {loadingAssets && (
-            <div className="flex items-center gap-1.5 text-xs text-indigo-300">
+            <div className="flex items-center gap-1.5 text-xs text-indigo-500 dark:text-indigo-300">
               <Loader size={13} className="animate-spin" />
               Scanning assets...
             </div>
           )}
         </div>
 
-        <Card className="overflow-hidden divide-y divide-white/10 border-white/20">
+        <Card className="overflow-hidden divide-y divide-(--border) border-(--border)">
           {/* Native SOL Row */}
-          <div className="p-4 flex items-center justify-between hover:bg-white/3 transition-colors">
+          <div className="p-4 flex items-center justify-between hover:bg-black/2 dark:hover:bg-white/3 transition-colors">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center font-black text-indigo-300 text-xs shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center font-black text-indigo-500 dark:text-indigo-300 text-xs shadow-sm">
                 SOL
               </div>
               <div>
-                <div className="text-sm font-bold text-white">Solana</div>
-                <div className="text-xs text-slate-400">Native Network Token</div>
+                <div className="text-sm font-bold text-foreground">Solana</div>
+                <div className="text-xs text-(--text-muted)">Native Network Token</div>
                 {/* FEAT-042: Sparkline mini-chart */}
                 <div className="mt-1">
                   <Sparkline symbol="SOL" />
@@ -657,13 +657,13 @@ function ConnectedView({
               </div>
             </div>
             <div className="text-right">
-              <div className="text-sm font-black text-white font-mono">
+              <div className="text-sm font-black text-foreground font-mono">
                 {balance !== null ? balance.toFixed(4) : "—"}
               </div>
-              <div className="text-xs text-slate-400 font-semibold flex items-center justify-end gap-1 font-mono">
+              <div className="text-xs text-(--text-muted) font-semibold flex items-center justify-end gap-1 font-mono">
                 <span>SOL</span>
                 <span>·</span>
-                <span className="text-emerald-400">{formatUsd(balance, "SOL")}</span>
+                <span className="text-emerald-500 dark:text-emerald-400">{formatUsd(balance, "SOL")}</span>
               </div>
             </div>
           </div>
@@ -672,17 +672,17 @@ function ConnectedView({
           {tokens.map((token) => (
             <div
               key={token.mint}
-              className="p-4 flex items-center justify-between hover:bg-white/3 transition-colors"
+              className="p-4 flex items-center justify-between hover:bg-black/2 dark:hover:bg-white/3 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-purple-500/25 border border-purple-400/40 flex items-center justify-center font-bold text-purple-300 text-xs shadow-sm">
+                <div className="w-10 h-10 rounded-xl bg-purple-500/25 border border-purple-400/40 flex items-center justify-center font-bold text-purple-600 dark:text-purple-300 text-xs shadow-sm">
                   {token.symbol.slice(0, 4)}
                 </div>
                 <div>
-                  <div className="text-sm font-bold text-white truncate max-w-40">
+                  <div className="text-sm font-bold text-foreground truncate max-w-40">
                     {token.name}
                   </div>
-                  <div className="text-[11px] text-slate-400 font-mono">
+                  <div className="text-[11px] text-(--text-muted) font-mono">
                     {token.mint.slice(0, 4)}...{token.mint.slice(-4)}
                   </div>
                   {/* FEAT-042: Sparkline mini-chart for SPL tokens */}
@@ -692,13 +692,13 @@ function ConnectedView({
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-sm font-black text-white font-mono">
+                <div className="text-sm font-black text-foreground font-mono">
                   {token.balance.toFixed(4)}
                 </div>
-                <div className="text-xs text-slate-400 font-semibold flex items-center justify-end gap-1 font-mono">
+                <div className="text-xs text-(--text-muted) font-semibold flex items-center justify-end gap-1 font-mono">
                   <span>{token.symbol}</span>
                   <span>·</span>
-                  <span className="text-emerald-400">{formatUsd(token.balance, token.symbol)}</span>
+                  <span className="text-emerald-500 dark:text-emerald-400">{formatUsd(token.balance, token.symbol)}</span>
                 </div>
               </div>
             </div>

@@ -229,13 +229,13 @@ export default function EmptyState({
 
   return (
     <div
-      className={`p-8 text-center flex flex-col items-center gap-3 bg-[var(--bg-card)] border border-white/10 rounded-3xl ${className}`}
+      className={`p-8 text-center flex flex-col items-center gap-3 bg-(--bg-card) border border-(--border) rounded-3xl ${className}`}
     >
       {renderIllustration()}
 
       <div className="max-w-xs">
-        <h3 className="text-base font-black text-white tracking-tight">{currentTitle}</h3>
-        <p className="text-xs text-slate-400 mt-1 leading-relaxed">{currentDesc}</p>
+        <h3 className="text-base font-black text-foreground tracking-tight">{currentTitle}</h3>
+        <p className="text-xs text-(--text-muted) mt-1 leading-relaxed">{currentDesc}</p>
       </div>
 
       {type === "not-connected" ? (

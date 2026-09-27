@@ -10,6 +10,11 @@
   "theme_color": "#090B10",
   "icons": [
     {
+      "src": "/dpi-icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png"
+    },
+    {
       "src": "/dpi-icon-square.png",
       "sizes": "1024x1024",
       "type": "image/png"

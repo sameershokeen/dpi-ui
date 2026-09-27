@@ -671,7 +671,7 @@ function SendPageInner() {
               <Send size={24} />
             </div>
             <h2 className="text-lg font-bold text-white">Connect Your Wallet</h2>
-            <p className="text-xs text-slate-400 max-w-xs">
+            <p className="text-xs text-(--text-muted) max-w-xs">
               Connect your Solana Devnet wallet to send instant payments via @handle or address.
             </p>
           </Card>
@@ -742,7 +742,7 @@ function SendPageInner() {
                   {recentContacts.map((contact) => (
                     <div
                       key={contact.address}
-                      className="group flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-xl bg-[#13192B] hover:bg-indigo-900/40 border border-white/10 hover:border-indigo-500/40 text-xs text-slate-200 shrink-0 transition-all"
+                      className="group flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-xl bg-(--bg-card) hover:bg-indigo-500/15 border border-(--border) hover:border-indigo-500/40 text-xs text-(--text-secondary) shrink-0 transition-all"
                     >
                       <button
                         type="button"
@@ -757,7 +757,7 @@ function SendPageInner() {
                       <button
                         type="button"
                         onClick={(e) => removeRecentContact(e, contact.address)}
-                        className="text-slate-500 hover:text-rose-400 p-1 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+                        className="text-(--text-muted) hover:text-rose-400 p-1 rounded-lg hover:bg-(--bg-subtle) transition-colors cursor-pointer"
                         title="Remove"
                         aria-label={`Remove ${contact.handle || contact.address}`}
                       >
@@ -769,11 +769,11 @@ function SendPageInner() {
               )}
             </div>
 
-            <Card className="p-5 flex flex-col gap-5 border-white/20">
+            <Card className="p-5 flex flex-col gap-5 border-(--border)">
               {/* Recipient */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-[11px] font-bold text-slate-300 tracking-wider uppercase">
+                  <label className="text-[11px] font-bold text-(--text-secondary) tracking-wider uppercase">
                     Recipient
                   </label>
                   <button
@@ -782,31 +782,31 @@ function SendPageInner() {
                       triggerHaptic("tap");
                       setScannerOpen(true);
                     }}
-                    className="flex items-center gap-1 text-xs font-semibold text-indigo-400 hover:text-indigo-300 cursor-pointer"
+                    className="flex items-center gap-1 text-xs font-semibold text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 cursor-pointer"
                   >
                     <QrCode size={13} />
                     Scan QR
                   </button>
                 </div>
                 <div
-                  className={`flex items-center gap-3 px-3.5 py-3 rounded-xl bg-white/4 border ${
+                  className={`flex items-center gap-3 px-3.5 py-3 rounded-xl bg-(--bg-subtle) border ${
                     resolvedAddress
                       ? "border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
                       : resolveError
                       ? "border-rose-500/50"
-                      : "border-white/15"
+                      : "border-(--border)"
                   } transition-all`}
                 >
-                  <AtSign size={18} className="text-indigo-400 shrink-0" />
+                  <AtSign size={18} className="text-indigo-500 dark:text-indigo-400 shrink-0" />
                   <input
                     value={recipient}
                     onChange={(e) => onRecipientChange(e.target.value)}
                     placeholder="@handle or Solana address"
-                    className="flex-1 bg-transparent border-none outline-none text-sm text-white placeholder:text-slate-500 font-medium"
+                    className="flex-1 bg-transparent border-none outline-none text-sm text-foreground placeholder:text-(--text-muted) font-medium"
                   />
-                  {resolving && <Loader size={16} className="animate-spin text-indigo-400" />}
+                  {resolving && <Loader size={16} className="animate-spin text-indigo-500 dark:text-indigo-400" />}
                   {resolvedAddress && !resolving && (
-                    <CheckCircle size={16} className="text-emerald-400 shrink-0" />
+                    <CheckCircle size={16} className="text-emerald-500 dark:text-emerald-400 shrink-0" />
                   )}
                 </div>
                 {resolvedAddress && (
@@ -817,10 +817,10 @@ function SendPageInner() {
                       size={36}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs font-bold text-white truncate">
+                      <div className="text-xs font-bold text-foreground truncate">
                         {recipient.startsWith("@") ? recipient : "Resolved Address"}
                       </div>
-                      <div className="text-[11px] text-emerald-400 font-mono truncate">
+                      <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono truncate">
                         {resolvedAddress.slice(0, 10)}...{resolvedAddress.slice(-6)}
                       </div>
                     </div>
@@ -837,19 +837,19 @@ function SendPageInner() {
                           setSavedToContacts(true);
                           toast.success("Saved to your Address Book!");
                         }}
-                        className="text-[10px] font-bold px-2 py-1 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-400/30 transition-colors flex items-center gap-1 cursor-pointer"
+                        className="text-[10px] font-bold px-2 py-1 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-600 dark:text-indigo-300 border border-indigo-400/30 transition-colors flex items-center gap-1 cursor-pointer"
                       >
-                        {savedToContacts ? <Check size={11} className="text-emerald-400" /> : <BookmarkPlus size={11} />}
+                        {savedToContacts ? <Check size={11} className="text-emerald-500 dark:text-emerald-400" /> : <BookmarkPlus size={11} />}
                         {savedToContacts ? "Saved" : "Save"}
                       </button>
-                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/20 px-2 py-1 rounded-lg border border-emerald-500/30 shrink-0">
+                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/20 px-2 py-1 rounded-lg border border-emerald-500/30 shrink-0">
                         Verified ✓
                       </span>
                     </div>
                   </div>
                 )}
                 {resolveError && (
-                  <div className="text-[11px] text-rose-400 mt-1.5 flex items-center gap-1">
+                  <div className="text-[11px] text-rose-500 dark:text-rose-400 mt-1.5 flex items-center gap-1">
                     <AlertTriangle size={12} /> {resolveError}
                   </div>
                 )}
@@ -857,7 +857,7 @@ function SendPageInner() {
 
               {/* Asset Selector */}
               <div>
-                <label className="text-[11px] font-bold text-slate-300 tracking-wider uppercase block mb-2">
+                <label className="text-[11px] font-bold text-(--text-secondary) tracking-wider uppercase block mb-2">
                   Select Asset
                 </label>
                 <div className="relative">
@@ -881,16 +881,16 @@ function SendPageInner() {
                       }
                       setAmount("");
                     }}
-                    className="w-full px-4 py-3 rounded-xl bg-white/4 border border-white/15 text-sm font-bold text-white outline-none appearance-none cursor-pointer pr-10"
+                    className="w-full px-4 py-3 rounded-xl bg-(--bg-subtle) border border-(--border) text-sm font-bold text-foreground outline-none appearance-none cursor-pointer pr-10"
                   >
-                    <optgroup label="Popular Devnet Tokens" className="bg-[#121626] text-white">
+                    <optgroup label="Popular Devnet Tokens" className="bg-(--bg-elevated) text-foreground">
                       <option value="SOL">SOL (Native Solana)</option>
                       <option value="USDC">USDC (Circle Devnet)</option>
                       <option value="EURC">EURC (Circle Devnet)</option>
                       <option value="PYUSD">PYUSD (PayPal Devnet)</option>
                     </optgroup>
                     {scannedTokens.length > 0 && (
-                      <optgroup label="Detected in Your Wallet" className="bg-[#121626] text-white">
+                      <optgroup label="Detected in Your Wallet" className="bg-(--bg-elevated) text-foreground">
                         {scannedTokens.map((t) => (
                           <option key={t.mint} value={t.mint}>
                             {t.symbol} ({t.balance.toFixed(4)})
@@ -899,7 +899,7 @@ function SendPageInner() {
                       </optgroup>
                     )}
                   </select>
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none text-slate-400">
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none text-(--text-muted)">
                     <ChevronDown size={16} />
                   </div>
                 </div>
@@ -908,7 +908,7 @@ function SendPageInner() {
               {/* Amount Pad (FEAT-038: Big number display & MAX button) */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-[11px] font-bold text-slate-300 tracking-wider uppercase">
+                  <label className="text-[11px] font-bold text-(--text-secondary) tracking-wider uppercase">
                     Amount
                   </label>
                   {balance !== null && balance > 0 && (
@@ -923,28 +923,28 @@ function SendPageInner() {
                           setAmount(balance.toString());
                         }
                       }}
-                      className="px-2 py-0.5 rounded-md bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 text-[10px] font-mono font-bold transition-all cursor-pointer active:scale-95"
+                      className="px-2 py-0.5 rounded-md bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-600 dark:text-indigo-300 border border-indigo-500/30 text-[10px] font-mono font-bold transition-all cursor-pointer active:scale-95"
                     >
                       MAX
                     </button>
                   )}
                 </div>
 
-                <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/4 border border-white/15 focus-within:border-indigo-400 transition-colors">
+                <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-(--bg-subtle) border border-(--border) focus-within:border-indigo-500 transition-colors">
                   <input
                     type="text"
                     inputMode="decimal"
                     value={amount}
                     onChange={(e) => onAmountChange(e.target.value)}
                     placeholder="0.00"
-                    className="flex-1 bg-transparent border-none outline-none text-3xl sm:text-4xl font-black text-white font-mono placeholder:text-slate-600 tracking-tight"
+                    className="flex-1 bg-transparent border-none outline-none text-3xl sm:text-4xl font-black text-foreground font-mono placeholder:text-(--text-muted) tracking-tight"
                   />
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-base font-black text-indigo-400 font-mono">
+                    <span className="text-base font-black text-indigo-500 dark:text-indigo-400 font-mono">
                       {tokenSymbol}
                     </span>
                     {isToken2022 && (
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/30 text-indigo-200 border border-indigo-400/40">
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/30 text-indigo-600 dark:text-indigo-200 border border-indigo-400/40">
                         2022
                       </span>
                     )}
@@ -952,8 +952,8 @@ function SendPageInner() {
                 </div>
 
                 {/* FEAT-009: USD Conversion display */}
-                <div className="text-[11px] text-slate-400 font-mono mt-2 flex justify-between items-center">
-                  <span className="text-emerald-400 font-medium">
+                <div className="text-[11px] text-(--text-muted) font-mono mt-2 flex justify-between items-center">
+                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">
                     {parsedAmount > 0 ? `≈ ${formatUsd(parsedAmount, tokenSymbol)} USD` : ""}
                   </span>
                   <span>
@@ -973,8 +973,8 @@ function SendPageInner() {
                       }}
                       className={`py-1.5 rounded-xl border text-xs font-bold font-mono transition-all active:scale-95 cursor-pointer ${
                         amount === q.toString()
-                          ? "bg-indigo-500/30 text-indigo-300 border-indigo-400/50 shadow-sm"
-                          : "bg-white/3 text-slate-300 border-white/10 hover:bg-white/8"
+                          ? "bg-indigo-500/30 text-indigo-600 dark:text-indigo-300 border-indigo-400/50 shadow-sm"
+                          : "bg-(--bg-subtle) text-(--text-secondary) border-(--border) hover:bg-black/5 dark:hover:bg-(--bg-subtle)"
                       }`}
                     >
                       {q}
@@ -986,48 +986,48 @@ function SendPageInner() {
               {/* FEAT-004: Transaction Memo / Note */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[11px] font-bold text-slate-300 tracking-wider uppercase">
+                  <label className="text-[11px] font-bold text-(--text-secondary) tracking-wider uppercase">
                     Transaction Memo / Note (Optional)
                   </label>
-                  <span className="text-[10px] text-slate-500 font-mono">{memo.length}/50</span>
+                  <span className="text-[10px] text-(--text-muted) font-mono">{memo.length}/50</span>
                 </div>
-                <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white/4 border border-white/15 focus-within:border-indigo-400 transition-colors">
-                  <FileText size={16} className="text-slate-400 shrink-0" />
+                <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-(--bg-subtle) border border-(--border) focus-within:border-indigo-500 transition-colors">
+                  <FileText size={16} className="text-(--text-muted) shrink-0" />
                   <input
                     type="text"
                     value={memo}
                     maxLength={50}
                     onChange={(e) => setMemo(e.target.value)}
                     placeholder="e.g. Coffee, Split dinner, Milestone invoice"
-                    className="flex-1 bg-transparent border-none outline-none text-xs text-white placeholder:text-slate-500 font-medium"
+                    className="flex-1 bg-transparent border-none outline-none text-xs text-foreground placeholder:text-(--text-muted) font-medium"
                   />
                 </div>
               </div>
 
               {/* Summary */}
               {resolvedAddress && amount && parseFloat(amount) > 0 && (
-                <div className="p-3.5 rounded-xl bg-white/3 border border-white/10 text-xs flex flex-col gap-2">
-                  <div className="flex justify-between text-slate-300">
+                <div className="p-3.5 rounded-xl bg-(--bg-subtle) border border-(--border) text-xs flex flex-col gap-2">
+                  <div className="flex justify-between text-(--text-secondary)">
                     <span>Transfer Amount</span>
-                    <span className="font-bold text-white font-mono">
+                    <span className="font-bold text-foreground font-mono">
                       {amount} {tokenSymbol} ({formatUsd(parseFloat(amount), tokenSymbol)})
                     </span>
                   </div>
                   {memo && (
-                    <div className="flex justify-between text-slate-300">
+                    <div className="flex justify-between text-(--text-secondary)">
                       <span>Attached Memo</span>
-                      <span className="font-medium text-indigo-300 italic">&ldquo;{memo}&rdquo;</span>
+                      <span className="font-medium text-indigo-600 dark:text-indigo-300 italic">&ldquo;{memo}&rdquo;</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-slate-300">
+                  <div className="flex justify-between text-(--text-secondary)">
                     <span>Est. Network Fee</span>
-                    <span className="font-mono text-emerald-400">~0.000005 SOL</span>
+                    <span className="font-mono text-emerald-600 dark:text-emerald-400">~0.000005 SOL</span>
                   </div>
                 </div>
               )}
 
               {step === "error" && errorMsg && (
-                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs flex items-start gap-2">
+                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs flex items-start gap-2">
                   <AlertTriangle size={14} className="shrink-0 mt-0.5" />
                   <span>{errorMsg}</span>
                 </div>
@@ -1035,7 +1035,7 @@ function SendPageInner() {
 
               {/* FEAT-031: Inline insufficient balance warning */}
               {balanceError && (
-                <div className="p-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs flex items-start gap-2">
+                <div className="p-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs flex items-start gap-2">
                   <AlertTriangle size={14} className="shrink-0 mt-0.5" />
                   <span>{balanceError}</span>
                 </div>
@@ -1052,7 +1052,7 @@ function SendPageInner() {
                 className={`w-full py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg cursor-pointer ${
                   canSend
                     ? "bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-indigo-500/25 active:scale-[0.99] hover:brightness-110"
-                    : "bg-white/5 border border-white/10 text-slate-500 cursor-not-allowed"
+                    : "bg-black/5 dark:bg-(--bg-subtle) border border-(--border) text-(--text-muted) cursor-not-allowed"
                 }`}
               >
                 {step === "sending" ? (
@@ -1075,81 +1075,81 @@ function SendPageInner() {
       {/* FEAT-007: Multi-step Transaction Confirmation Preview Modal */}
       {reviewModalOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
           onClick={() => setReviewModalOpen(false)}
         >
           <div
-            className="relative max-w-sm w-full bg-[#111827] border border-indigo-500/30 rounded-3xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200"
+            className="relative max-w-sm w-full bg-(--bg-elevated) border border-(--border) rounded-3xl p-6 shadow-2xl flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setReviewModalOpen(false)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              className="absolute top-4 right-4 p-2 rounded-full bg-black/5 dark:bg-(--bg-subtle) hover:bg-black/10 dark:hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-foreground transition-colors cursor-pointer"
             >
               <X size={18} />
             </button>
 
             <div className="text-center">
-              <div className="w-12 h-12 mx-auto mb-2 rounded-2xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-indigo-400 shadow-md shadow-indigo-500/10">
+              <div className="w-12 h-12 mx-auto mb-2 rounded-2xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-indigo-500 dark:text-indigo-400 shadow-md shadow-indigo-500/10">
                 <Send size={22} />
               </div>
-              <h3 className="text-lg font-black text-white">Review Transfer</h3>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <h3 className="text-lg font-black text-foreground">Review Transfer</h3>
+              <p className="text-xs text-(--text-muted) mt-0.5">
                 Verify transfer details before signing in your wallet
               </p>
             </div>
 
             {/* Big Amount Card */}
-            <div className="py-4 px-3 rounded-2xl bg-white/4 border border-white/8 text-center flex flex-col items-center">
-              <div className="text-3xl font-black text-white font-mono tracking-tight">
+            <div className="py-4 px-3 rounded-2xl bg-(--bg-subtle) border border-(--border) text-center flex flex-col items-center">
+              <div className="text-3xl font-black text-foreground font-mono tracking-tight">
                 {amount} {tokenSymbol}
               </div>
-              <div className="text-xs font-mono font-bold text-emerald-400 mt-1">
+              <div className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 mt-1">
                 ≈ {formatUsd(parsedAmount, tokenSymbol)} USD
               </div>
               {isToken2022 && (
-                <span className="mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                <span className="mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border border-indigo-500/30">
                   SPL Token-2022 Program
                 </span>
               )}
             </div>
 
             {/* Recipient Card */}
-            <div className="p-3.5 rounded-2xl bg-white/4 border border-white/8 flex items-center gap-3">
+            <div className="p-3.5 rounded-2xl bg-(--bg-subtle) border border-(--border) flex items-center gap-3">
               <RecipientAvatar
                 address={resolvedAddress || ""}
                 handle={recipient.startsWith("@") ? recipient : undefined}
                 size={42}
               />
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-bold text-white truncate">
+                <div className="text-xs font-bold text-foreground truncate">
                   {recipient.startsWith("@") ? recipient : "Recipient"}
                 </div>
-                <div className="text-[11px] font-mono text-slate-400 truncate">
+                <div className="text-[11px] font-mono text-(--text-muted) truncate">
                   {resolvedAddress ? `${resolvedAddress.slice(0, 10)}...${resolvedAddress.slice(-8)}` : ""}
                 </div>
               </div>
-              <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                 Verified
               </span>
             </div>
 
             {/* Network breakdown */}
-            <div className="divide-y divide-white/6 text-xs text-slate-300 px-1">
+            <div className="divide-y divide-(--border) text-xs text-(--text-secondary) px-1">
               <div className="py-2 flex justify-between">
-                <span className="text-slate-400">Est. Network Fee</span>
-                <span className="font-mono text-emerald-400">~0.000005 SOL (&lt;$0.001)</span>
+                <span className="text-(--text-muted)">Est. Network Fee</span>
+                <span className="font-mono text-emerald-600 dark:text-emerald-400">~0.000005 SOL (&lt;$0.001)</span>
               </div>
               <div className="py-2 flex justify-between">
-                <span className="text-slate-400">Est. Confirmation Time</span>
-                <span className="font-bold text-indigo-300 flex items-center gap-1">
-                  <Zap size={12} className="text-amber-400" /> &lt; 1 sec (Turbo)
+                <span className="text-(--text-muted)">Est. Confirmation Time</span>
+                <span className="font-bold text-indigo-600 dark:text-indigo-300 flex items-center gap-1">
+                  <Zap size={12} className="text-amber-500 dark:text-amber-400" /> &lt; 1 sec (Turbo)
                 </span>
               </div>
               {memo && (
                 <div className="py-2 flex justify-between items-start gap-2">
-                  <span className="text-slate-400 shrink-0">Attached Memo</span>
-                  <span className="font-medium text-white italic text-right break-words">
+                  <span className="text-(--text-muted) shrink-0">Attached Memo</span>
+                  <span className="font-medium text-foreground italic text-right wrap-break-word">
                     &ldquo;{memo}&rdquo;
                   </span>
                 </div>
@@ -1161,7 +1161,7 @@ function SendPageInner() {
               <button
                 type="button"
                 onClick={() => setReviewModalOpen(false)}
-                className="py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition-all cursor-pointer"
+                className="py-3 rounded-xl bg-black/5 dark:bg-(--bg-subtle) hover:bg-black/10 dark:hover:bg-(--bg-card-hover) text-foreground text-xs font-bold transition-all cursor-pointer border border-(--border)"
               >
                 Back to Edit
               </button>
@@ -1242,22 +1242,22 @@ function SuccessView({
       </div>
 
       <div>
-        <h2 className="text-xl font-black text-white">Payment Sent!</h2>
-        <p className="text-xs text-slate-300 mt-1">
+        <h2 className="text-xl font-black text-foreground">Payment Sent!</h2>
+        <p className="text-xs text-(--text-secondary) mt-1">
           Your transaction was confirmed on Solana Devnet
         </p>
       </div>
 
-      <div className="w-full p-4 rounded-2xl bg-white/3 border border-white/10 flex flex-col gap-2.5 text-xs text-left">
-        <div className="flex justify-between border-b border-white/8 pb-2">
-          <span className="text-slate-400">Amount</span>
-          <span className="font-bold text-white font-mono">
+      <div className="w-full p-4 rounded-2xl bg-(--bg-card) border border-(--border) flex flex-col gap-2.5 text-xs text-left">
+        <div className="flex justify-between border-b border-(--border-subtle) pb-2">
+          <span className="text-(--text-muted)">Amount</span>
+          <span className="font-bold text-foreground font-mono">
             {amount} {tokenSymbol}
           </span>
         </div>
-        <div className="flex items-center justify-between border-b border-white/8 pb-2">
-          <span className="text-slate-400">Recipient</span>
-          <div className="flex items-center gap-1.5 font-bold text-indigo-300 font-mono">
+        <div className="flex items-center justify-between border-b border-(--border-subtle) pb-2">
+          <span className="text-(--text-muted)">Recipient</span>
+          <div className="flex items-center gap-1.5 font-bold text-indigo-600 dark:text-indigo-300 font-mono">
             <RecipientAvatar
               address={recipient.startsWith("@") ? undefined : recipient}
               handle={recipient.startsWith("@") ? recipient : undefined}
@@ -1267,16 +1267,16 @@ function SuccessView({
           </div>
         </div>
         {memo && (
-          <div className="flex justify-between border-b border-white/8 pb-2">
-            <span className="text-slate-400">Memo</span>
-            <span className="font-medium text-indigo-300 italic max-w-[200px] truncate text-right">
+          <div className="flex justify-between border-b border-(--border-subtle) pb-2">
+            <span className="text-(--text-muted)">Memo</span>
+            <span className="font-medium text-indigo-600 dark:text-indigo-300 italic max-w-50 truncate text-right">
               &ldquo;{memo}&rdquo;
             </span>
           </div>
         )}
         <div className="flex justify-between">
-          <span className="text-slate-400">Status</span>
-          <span className="font-bold text-emerald-400">Confirmed ✓</span>
+          <span className="text-(--text-muted)">Status</span>
+          <span className="font-bold text-emerald-600 dark:text-emerald-400">Confirmed ✓</span>
         </div>
       </div>
 
@@ -1294,7 +1294,7 @@ function SuccessView({
               timestamp: new Date().toLocaleString(),
             });
           }}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-xs font-bold text-slate-200 active:scale-95 transition-all cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-(--bg-subtle) hover:bg-(--bg-card-hover) border border-(--border) text-xs font-bold text-(--text-secondary) active:scale-95 transition-all cursor-pointer"
         >
           <Receipt size={14} className="text-indigo-400" /> Share / Download Proof Receipt (PNG)
         </button>
@@ -1304,7 +1304,7 @@ function SuccessView({
             href={`https://explorer.solana.com/tx/${txSig}?cluster=devnet`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-1.5 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-xs font-bold text-slate-300 transition-all"
+            className="flex items-center justify-center gap-1.5 py-3 px-4 rounded-xl bg-(--bg-subtle) hover:bg-(--bg-card-hover) border border-(--border) text-xs font-bold text-(--text-secondary) transition-all"
           >
             Explorer <ExternalLink size={12} />
           </a>
@@ -1324,7 +1324,7 @@ export default function SendPage() {
   return (
     <Suspense
       fallback={
-        <div className="p-12 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+        <div className="p-12 text-center text-xs text-(--text-muted) flex items-center justify-center gap-2">
           <Loader size={16} className="animate-spin text-indigo-400" /> Loading send module...
         </div>
       }

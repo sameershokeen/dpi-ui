@@ -240,11 +240,11 @@ export default function ProfilePage() {
         <Header title="Profile" />
         <div className="px-4 py-8">
           <Card className="p-8 text-center flex flex-col items-center gap-3">
-            <div className="w-14 h-14 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+            <div className="w-14 h-14 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-500 dark:text-indigo-400">
               <User size={28} />
             </div>
-            <h2 className="text-lg font-black text-white">Connect Your Wallet</h2>
-            <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+            <h2 className="text-lg font-black text-foreground">Connect Your Wallet</h2>
+            <p className="text-xs text-(--text-muted) max-w-xs leading-relaxed">
               Connect to manage your DPI on-chain profile, registered handle, and avatar.
             </p>
             <div className="mt-2">
@@ -266,14 +266,14 @@ export default function ProfilePage() {
       <div className="px-4 py-4 flex flex-col gap-4">
         {/* Low Balance Airdrop Banner */}
         {balance !== null && balance < 0.05 && (
-          <div className="p-3.5 rounded-2xl bg-linear-to-r from-indigo-950/80 to-purple-950/80 border border-indigo-500/40 backdrop-blur-xl flex items-center justify-between gap-3 shadow-[0_4px_20px_rgba(99,102,241,0.2)] animate-in fade-in slide-in-from-top-2">
+          <div className="p-3.5 rounded-2xl bg-indigo-500/10 dark:bg-linear-to-r dark:from-indigo-950/80 dark:to-purple-950/80 border border-indigo-500/30 backdrop-blur-xl flex items-center justify-between gap-3 shadow-[0_4px_20px_rgba(99,102,241,0.15)] animate-in fade-in slide-in-from-top-2">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-500 dark:text-indigo-400 shrink-0">
                 <Droplets size={16} />
               </div>
               <div className="min-w-0">
-                <div className="text-xs font-bold text-white">Low Devnet Balance</div>
-                <div className="text-[10px] text-slate-400">Need SOL for gas fees?</div>
+                <div className="text-xs font-bold text-foreground">Low Devnet Balance</div>
+                <div className="text-[10px] text-(--text-muted)">Need SOL for gas fees?</div>
               </div>
             </div>
             <button
@@ -292,7 +292,7 @@ export default function ProfilePage() {
         )}
 
         {/* Profile Card */}
-        <Card className="p-6 text-center flex flex-col items-center gap-3 bg-linear-to-b from-[#181F33] to-[#101422] border-indigo-500/20">
+        <Card className="p-6 text-center flex flex-col items-center gap-3 border-indigo-500/20">
           <input
             type="file"
             ref={fileInputRef}
@@ -304,7 +304,7 @@ export default function ProfilePage() {
           <div className="relative">
             <div
               onClick={handleAvatarClick}
-              className="w-20 h-20 rounded-3xl bg-linear-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center font-black text-white text-3xl shadow-[0_0_30px_rgba(99,102,241,0.35)] relative overflow-hidden group cursor-pointer border border-white/20 active:scale-95 transition-all"
+              className="w-20 h-20 rounded-3xl bg-linear-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center font-black text-white text-3xl shadow-[0_0_30px_rgba(99,102,241,0.35)] relative overflow-hidden group cursor-pointer border border-(--border-bright) active:scale-95 transition-all"
               title={profilePhoto ? "Click to preview photo" : "Click to upload profile photo"}
             >
               {uploading ? (
@@ -334,7 +334,7 @@ export default function ProfilePage() {
                 e.stopPropagation();
                 triggerFileInput();
               }}
-              className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg border-2 border-[#181F33] cursor-pointer active:scale-90 transition-all z-10"
+              className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg border-2 border-(--bg-card) cursor-pointer active:scale-90 transition-all z-10"
               title={profilePhoto ? "Change profile photo" : "Upload photo"}
             >
               <Camera size={13} />
@@ -342,7 +342,7 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <h1 className="text-2xl font-black text-white tracking-tight">
+            <h1 className="text-2xl font-black text-foreground tracking-tight">
               {handle ? `@${handle}` : "No Handle Registered"}
             </h1>
             {handle && (
@@ -369,7 +369,7 @@ export default function ProfilePage() {
                 triggerHaptic("tap");
                 setQrOpen(true);
               }}
-              className="p-1.5 rounded-xl bg-white/4 border border-white/10 text-slate-300 hover:text-white hover:bg-white/8 active:scale-95 transition-all cursor-pointer"
+              className="p-1.5 rounded-xl bg-black/5 dark:bg-(--bg-subtle) border border-(--border) text-(--text-secondary) hover:text-foreground hover:bg-black/10 dark:hover:bg-(--bg-card-hover) active:scale-95 transition-all cursor-pointer"
               title="Show QR Code"
             >
               <QrCode size={16} />
@@ -380,41 +380,41 @@ export default function ProfilePage() {
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3">
           <Card className="p-4 flex flex-col items-center justify-center text-center">
-            <div className="flex items-center gap-1.5 text-xs text-indigo-400 font-semibold mb-1">
+            <div className="flex items-center gap-1.5 text-xs text-indigo-500 dark:text-indigo-400 font-semibold mb-1">
               <Coins size={14} />
               <span>SOL Balance</span>
             </div>
-            <div className="text-xl font-black text-white font-mono">
+            <div className="text-xl font-black text-foreground font-mono">
               {loading ? "…" : balance !== null ? balance.toFixed(3) : "—"}
             </div>
             <button
               onClick={handleRequestAirdrop}
               disabled={airdropping}
-              className="mt-2 text-[10px] text-indigo-300 hover:text-indigo-200 underline cursor-pointer disabled:opacity-50"
+              className="mt-2 text-[10px] text-indigo-500 dark:text-indigo-300 hover:underline cursor-pointer disabled:opacity-50"
             >
               {airdropping ? "Requesting..." : "+ Request Airdrop"}
             </button>
           </Card>
 
           <Card className="p-4 flex flex-col items-center justify-center text-center">
-            <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold mb-1">
+            <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold mb-1">
               <AtSign size={14} />
               <span>Registered Handles</span>
             </div>
-            <div className="text-xl font-black text-white font-mono">
+            <div className="text-xl font-black text-foreground font-mono">
               {loading ? "…" : handle ? "1" : "0"}
             </div>
             {handle ? (
               <Link
                 href={`/handle/${handle}`}
-                className="mt-2 text-[10px] text-emerald-400 hover:text-emerald-300 underline"
+                className="mt-2 text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline"
               >
                 View Public Profile
               </Link>
             ) : (
               <Link
                 href="/handle"
-                className="mt-2 text-[10px] text-indigo-400 hover:text-indigo-300 underline"
+                className="mt-2 text-[10px] text-indigo-500 dark:text-indigo-400 hover:underline"
               >
                 Claim @handle
               </Link>
@@ -423,19 +423,19 @@ export default function ProfilePage() {
         </div>
 
         {/* Quick Links */}
-        <Card className="overflow-hidden divide-y divide-white/6">
+        <Card className="overflow-hidden divide-y divide-(--border) border-(--border)">
           {handle && (
             <Link
               href={`/handle/${handle}`}
-              className="p-4 flex items-center justify-between hover:bg-white/2 active:bg-white/4 transition-colors"
+              className="p-4 flex items-center justify-between hover:bg-black/2 dark:hover:bg-white/2 active:bg-black/5 dark:active:bg-(--bg-subtle) transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                <div className="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-500 dark:text-indigo-400">
                   <AtSign size={16} />
                 </div>
-                <span className="text-xs font-bold text-white">View Public @{handle} Page</span>
+                <span className="text-xs font-bold text-foreground">View Public @{handle} Page</span>
               </div>
-              <span className="text-slate-500 text-sm">›</span>
+              <span className="text-(--text-muted) text-sm">›</span>
             </Link>
           )}
 
@@ -446,48 +446,48 @@ export default function ProfilePage() {
                 triggerHaptic("tap");
                 setTransferModalOpen(true);
               }}
-              className="w-full p-4 flex items-center justify-between hover:bg-white/2 active:bg-white/4 transition-colors text-left cursor-pointer"
+              className="w-full p-4 flex items-center justify-between hover:bg-black/2 dark:hover:bg-white/2 active:bg-black/5 dark:active:bg-(--bg-subtle) transition-colors text-left cursor-pointer"
             >
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                <div className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
                   <ArrowRightLeft size={16} />
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-white block">Transfer Handle Ownership</span>
-                  <span className="text-[10px] text-slate-400">Reassign @{handle} to a new Solana wallet</span>
+                  <span className="text-xs font-bold text-foreground block">Transfer Handle Ownership</span>
+                  <span className="text-[10px] text-(--text-muted)">Reassign @{handle} to a new Solana wallet</span>
                 </div>
               </div>
-              <span className="text-slate-500 text-sm">›</span>
+              <span className="text-(--text-muted) text-sm">›</span>
             </button>
           )}
 
           <Link
             href="/handle"
-            className="p-4 flex items-center justify-between hover:bg-white/2 active:bg-white/4 transition-colors"
+            className="p-4 flex items-center justify-between hover:bg-black/2 dark:hover:bg-white/2 active:bg-black/5 dark:active:bg-(--bg-subtle) transition-colors"
           >
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                 <Search size={16} />
               </div>
               <div>
-                <span className="text-xs font-bold text-white block">Search & Check @Handles</span>
-                <span className="text-[10px] text-slate-400">Check availability or lookup profiles</span>
+                <span className="text-xs font-bold text-foreground block">Search & Check @Handles</span>
+                <span className="text-[10px] text-(--text-muted)">Check availability or lookup profiles</span>
               </div>
             </div>
-            <span className="text-slate-500 text-sm">›</span>
+              <span className="text-(--text-muted) text-sm">›</span>
           </Link>
 
           <Link
             href="/history"
-            className="p-4 flex items-center justify-between hover:bg-white/2 active:bg-white/4 transition-colors"
+            className="p-4 flex items-center justify-between hover:bg-black/2 dark:hover:bg-white/2 active:bg-black/5 dark:active:bg-(--bg-subtle) transition-colors"
           >
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+              <div className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
                 <History size={16} />
               </div>
-              <span className="text-xs font-bold text-white">Transaction Receipts</span>
+              <span className="text-xs font-bold text-foreground">Transaction Receipts</span>
             </div>
-            <span className="text-slate-500 text-sm">›</span>
+              <span className="text-(--text-muted) text-sm">›</span>
           </Link>
 
           <button
@@ -496,18 +496,18 @@ export default function ProfilePage() {
               triggerHaptic("tap");
               setTokenFaucetOpen(true);
             }}
-            className="w-full p-4 flex items-center justify-between hover:bg-white/2 active:bg-white/4 transition-colors text-left cursor-pointer"
+            className="w-full p-4 flex items-center justify-between hover:bg-black/2 dark:hover:bg-white/2 active:bg-black/5 dark:active:bg-(--bg-subtle) transition-colors text-left cursor-pointer"
           >
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+              <div className="w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
                 <Coins size={16} />
               </div>
               <div>
-                <span className="text-xs font-bold text-white block">Devnet Token Faucet</span>
-                <span className="text-[10px] text-slate-400">Get free test USDC, EURC, & PYUSD</span>
+                <span className="text-xs font-bold text-foreground block">Devnet Token Faucet</span>
+                <span className="text-[10px] text-(--text-muted)">Get free test USDC, EURC, & PYUSD</span>
               </div>
             </div>
-            <span className="text-slate-500 text-sm">›</span>
+              <span className="text-(--text-muted) text-sm">›</span>
           </button>
 
           <a
@@ -518,15 +518,15 @@ export default function ProfilePage() {
             }
             target="_blank"
             rel="noopener noreferrer"
-            className="p-4 flex items-center justify-between hover:bg-white/2 active:bg-white/4 transition-colors"
+            className="p-4 flex items-center justify-between hover:bg-black/2 dark:hover:bg-white/2 active:bg-black/5 dark:active:bg-(--bg-subtle) transition-colors"
           >
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
                 <ExternalLink size={16} />
               </div>
-              <span className="text-xs font-bold text-white">Explorer Account Overview</span>
+              <span className="text-xs font-bold text-foreground">Explorer Account Overview</span>
             </div>
-            <span className="text-slate-500 text-sm">›</span>
+              <span className="text-(--text-muted) text-sm">›</span>
           </a>
         </Card>
 
@@ -547,13 +547,13 @@ export default function ProfilePage() {
           onClick={() => setPreviewOpen(false)}
         >
           <div
-            className="relative max-w-xs sm:max-w-sm w-full bg-[#111827] border border-white/16 rounded-3xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.7)] flex flex-col items-center gap-4 animate-in fade-in zoom-in-95 duration-200"
+            className="relative max-w-xs sm:max-w-sm w-full bg-(--bg-elevated) border border-(--border-bright) rounded-3xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.4)] flex flex-col items-center gap-4 animate-in fade-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
             <button
               onClick={() => setPreviewOpen(false)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              className="absolute top-4 right-4 p-2 rounded-full bg-(--bg-subtle) hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-foreground transition-colors cursor-pointer"
               title="Close preview"
             >
               <X size={18} />
@@ -561,14 +561,14 @@ export default function ProfilePage() {
 
             {/* Header info */}
             <div className="text-center mt-1">
-              <h3 className="text-base font-bold text-white">Profile Photo Preview</h3>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <h3 className="text-base font-bold text-foreground">Profile Photo Preview</h3>
+              <p className="text-xs text-(--text-muted) mt-0.5">
                 {handle ? `@${handle}` : shortKey}
               </p>
             </div>
 
             {/* Image display */}
-            <div className="w-56 h-56 rounded-2xl overflow-hidden border border-white/10 shadow-inner bg-black/40 flex items-center justify-center">
+            <div className="w-56 h-56 rounded-2xl overflow-hidden border border-(--border) shadow-inner bg-black/20 dark:bg-black/40 flex items-center justify-center">
               <img
                 src={profilePhoto}
                 alt="Profile Preview"

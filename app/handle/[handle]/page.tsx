@@ -364,11 +364,11 @@ export default function HandlePublicPage() {
 
         {notFound && !loading && (
           <Card className="p-8 text-center flex flex-col items-center gap-3">
-            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400">
+            <div className="w-14 h-14 rounded-2xl bg-(--bg-subtle) border border-(--border) flex items-center justify-center text-slate-400">
               <AlertTriangle size={28} />
             </div>
             <h2 className="text-lg font-black text-white">@{handle} Not Found</h2>
-            <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+            <p className="text-xs text-(--text-muted) max-w-xs leading-relaxed">
               This handle hasn&apos;t been registered on Solana Devnet yet. You can be the first to claim it!
             </p>
             <Link
@@ -384,7 +384,7 @@ export default function HandlePublicPage() {
           <>
             {/* Identity Card */}
             <Card className="p-6 text-center flex flex-col items-center gap-3 bg-linear-to-b from-[#161D2E] to-[#101422] border-indigo-500/20">
-              <div className="w-20 h-20 rounded-3xl bg-linear-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center font-black text-white text-3xl shadow-[0_0_30px_rgba(99,102,241,0.35)] overflow-hidden border border-white/20">
+              <div className="w-20 h-20 rounded-3xl bg-linear-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center font-black text-white text-3xl shadow-[0_0_30px_rgba(99,102,241,0.35)] overflow-hidden border border-(--border-bright)">
                 {profilePhoto ? (
                   <img src={profilePhoto} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
@@ -412,7 +412,7 @@ export default function HandlePublicPage() {
 
               {/* Bio if exists */}
               {bioData.bio && (
-                <p className="text-xs text-slate-300 max-w-xs leading-relaxed italic px-2">
+                <p className="text-xs text-(--text-secondary) max-w-xs leading-relaxed italic px-2">
                   &ldquo;{bioData.bio}&rdquo;
                 </p>
               )}
@@ -425,7 +425,7 @@ export default function HandlePublicPage() {
                       href={`https://twitter.com/${bioData.twitter.replace(/^@/, "")}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-sky-400 transition-colors"
+                      className="p-2 rounded-xl bg-(--bg-subtle) hover:bg-(--bg-card-hover) text-slate-300 hover:text-sky-400 transition-colors"
                       title="Twitter / X"
                     >
                       <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
@@ -438,7 +438,7 @@ export default function HandlePublicPage() {
                       href={`https://github.com/${bioData.github}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors"
+                      className="p-2 rounded-xl bg-(--bg-subtle) hover:bg-(--bg-card-hover) text-slate-300 hover:text-white transition-colors"
                       title="GitHub"
                     >
                       <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
@@ -451,7 +451,7 @@ export default function HandlePublicPage() {
                       href={`https://t.me/${bioData.telegram.replace(/^@/, "")}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-cyan-400 transition-colors"
+                      className="p-2 rounded-xl bg-(--bg-subtle) hover:bg-(--bg-card-hover) text-slate-300 hover:text-cyan-400 transition-colors"
                       title="Telegram"
                     >
                       <MessageCircle size={14} />
@@ -462,7 +462,7 @@ export default function HandlePublicPage() {
                       href={bioData.website.startsWith("http") ? bioData.website : `https://${bioData.website}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-emerald-400 transition-colors"
+                      className="p-2 rounded-xl bg-(--bg-subtle) hover:bg-(--bg-card-hover) text-slate-300 hover:text-emerald-400 transition-colors"
                       title="Website"
                     >
                       <Globe size={14} />
@@ -475,7 +475,7 @@ export default function HandlePublicPage() {
               <div className="flex items-center gap-2 mt-1">
                 <button
                   onClick={copyAddress}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/4 border border-white/10 text-xs font-mono text-slate-300 hover:bg-white/8 active:scale-95 transition-all cursor-pointer"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-(--bg-subtle) border border-(--border) text-xs font-mono text-slate-300 hover:bg-(--bg-card-hover) active:scale-95 transition-all cursor-pointer"
                 >
                   {copied ? (
                     <CheckCircle size={14} className="text-emerald-400" />
@@ -490,7 +490,7 @@ export default function HandlePublicPage() {
                     triggerHaptic("tap");
                     setQrOpen(true);
                   }}
-                  className="p-1.5 rounded-xl bg-white/4 border border-white/10 text-slate-300 hover:text-white hover:bg-white/8 active:scale-95 transition-all cursor-pointer"
+                  className="p-1.5 rounded-xl bg-(--bg-subtle) border border-(--border) text-slate-300 hover:text-white hover:bg-(--bg-card-hover) active:scale-95 transition-all cursor-pointer"
                   title="Show QR Code"
                 >
                   <QrCode size={16} />
@@ -498,7 +498,7 @@ export default function HandlePublicPage() {
 
                 <button
                   onClick={handleShare}
-                  className="p-1.5 rounded-xl bg-white/4 border border-white/10 text-slate-300 hover:text-white hover:bg-white/8 active:scale-95 transition-all cursor-pointer"
+                  className="p-1.5 rounded-xl bg-(--bg-subtle) border border-(--border) text-slate-300 hover:text-white hover:bg-(--bg-card-hover) active:scale-95 transition-all cursor-pointer"
                   title="Share Profile"
                 >
                   <Share2 size={16} />
@@ -534,7 +534,7 @@ export default function HandlePublicPage() {
 
                 {/* Edit Bio Form */}
                 {editingBio && (
-                  <div className="flex flex-col gap-2.5 pt-2 border-t border-white/8 animate-in fade-in">
+                  <div className="flex flex-col gap-2.5 pt-2 border-t border-(--border-subtle) animate-in fade-in">
                     <input
                       placeholder="Short bio or description"
                       value={editBioForm.bio || ""}
@@ -542,7 +542,7 @@ export default function HandlePublicPage() {
                         setEditBioForm({ ...editBioForm, bio: e.target.value })
                       }
                       maxLength={120}
-                      className="px-3 py-2 rounded-xl bg-white/4 border border-white/10 text-xs text-white outline-none"
+                      className="px-3 py-2 rounded-xl bg-(--bg-subtle) border border-(--border) text-xs text-white outline-none"
                     />
                     <div className="grid grid-cols-2 gap-2">
                       <input
@@ -551,7 +551,7 @@ export default function HandlePublicPage() {
                         onChange={(e) =>
                           setEditBioForm({ ...editBioForm, twitter: e.target.value })
                         }
-                        className="px-3 py-2 rounded-xl bg-white/4 border border-white/10 text-xs text-white outline-none"
+                        className="px-3 py-2 rounded-xl bg-(--bg-subtle) border border-(--border) text-xs text-white outline-none"
                       />
                       <input
                         placeholder="GitHub handle"
@@ -559,7 +559,7 @@ export default function HandlePublicPage() {
                         onChange={(e) =>
                           setEditBioForm({ ...editBioForm, github: e.target.value })
                         }
-                        className="px-3 py-2 rounded-xl bg-white/4 border border-white/10 text-xs text-white outline-none"
+                        className="px-3 py-2 rounded-xl bg-(--bg-subtle) border border-(--border) text-xs text-white outline-none"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-2">
@@ -569,7 +569,7 @@ export default function HandlePublicPage() {
                         onChange={(e) =>
                           setEditBioForm({ ...editBioForm, telegram: e.target.value })
                         }
-                        className="px-3 py-2 rounded-xl bg-white/4 border border-white/10 text-xs text-white outline-none"
+                        className="px-3 py-2 rounded-xl bg-(--bg-subtle) border border-(--border) text-xs text-white outline-none"
                       />
                       <input
                         placeholder="Website URL"
@@ -577,7 +577,7 @@ export default function HandlePublicPage() {
                         onChange={(e) =>
                           setEditBioForm({ ...editBioForm, website: e.target.value })
                         }
-                        className="px-3 py-2 rounded-xl bg-white/4 border border-white/10 text-xs text-white outline-none"
+                        className="px-3 py-2 rounded-xl bg-(--bg-subtle) border border-(--border) text-xs text-white outline-none"
                       />
                     </div>
                     <button
@@ -592,7 +592,7 @@ export default function HandlePublicPage() {
                 {/* Transfer Handle Action */}
                 <button
                   onClick={() => setTransferOpen(true)}
-                  className="w-full py-2.5 rounded-xl bg-white/4 hover:bg-white/8 border border-white/10 text-xs font-semibold text-slate-300 hover:text-white flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
+                  className="w-full py-2.5 rounded-xl bg-(--bg-subtle) hover:bg-(--bg-subtle) border border-(--border) text-xs font-semibold text-slate-300 hover:text-white flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
                 >
                   <ArrowRightLeft size={14} className="text-amber-400" />
                   Transfer Handle Ownership
@@ -653,7 +653,7 @@ export default function HandlePublicPage() {
             )}
 
             {/* FEAT-025: Analytics Dashboard */}
-            <Card className="p-4 flex flex-col gap-3 border-indigo-500/20 bg-gradient-to-br from-indigo-950/20 to-purple-950/10">
+            <Card className="p-4 flex flex-col gap-3 border-indigo-500/20 bg-linear-to-br from-indigo-950/20 to-purple-950/10">
               <div className="flex items-center justify-between">
                 <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                   <BarChart2 size={13} className="text-indigo-400" />
@@ -664,14 +664,14 @@ export default function HandlePublicPage() {
                 )}
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-white/4 border border-white/8 gap-1">
+                <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-(--bg-subtle) border border-(--border) gap-1">
                   <div className="text-2xl font-black text-white font-mono">{analytics.totalTx}</div>
                   <div className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
                     <TrendingUp size={10} className="text-emerald-400" />
                     Total Transactions
                   </div>
                 </div>
-                <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-white/4 border border-white/8 gap-1">
+                <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-(--bg-subtle) border border-(--border) gap-1">
                   <div className="text-2xl font-black text-white font-mono">{analytics.uniqueParties}</div>
                   <div className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
                     <Users size={10} className="text-indigo-400" />
@@ -679,7 +679,7 @@ export default function HandlePublicPage() {
                   </div>
                 </div>
               </div>
-              <p className="text-[10px] text-slate-500 text-center">
+              <p className="text-[10px] text-(--text-muted) text-center">
                 Derived client-side from on-chain signature history · Last 50 txns scanned
               </p>
             </Card>
@@ -691,15 +691,15 @@ export default function HandlePublicPage() {
               </div>
               <div className="divide-y divide-white/6 text-xs">
                 <div className="py-2.5 flex justify-between">
-                  <span className="text-slate-400">Handle</span>
+                  <span className="text-(--text-muted)">Handle</span>
                   <span className="font-bold text-white">@{data.handle}</span>
                 </div>
                 <div className="py-2.5 flex justify-between">
-                  <span className="text-slate-400">Owner Public Key</span>
+                  <span className="text-(--text-muted)">Owner Public Key</span>
                   <span className="font-mono text-indigo-300">{shortAddr}</span>
                 </div>
                 <div className="py-2.5 flex justify-between">
-                  <span className="text-slate-400">Network</span>
+                  <span className="text-(--text-muted)">Network</span>
                   <span className="font-semibold text-emerald-400">Solana Devnet</span>
                 </div>
               </div>
@@ -748,12 +748,12 @@ export default function HandlePublicPage() {
           onClick={() => setRecoverModalOpen(false)}
         >
           <div
-            className="relative max-w-sm w-full bg-[#111827] border border-purple-500/30 rounded-3xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200"
+            className="relative max-w-sm w-full bg-(--bg-elevated) border border-purple-500/30 rounded-3xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.4)] flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setRecoverModalOpen(false)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              className="absolute top-4 right-4 p-2 rounded-full bg-(--bg-subtle) hover:bg-(--bg-card-hover) text-(--text-muted) hover:text-foreground transition-colors cursor-pointer"
             >
               <X size={18} />
             </button>
@@ -762,28 +762,28 @@ export default function HandlePublicPage() {
               <div className="w-10 h-10 mx-auto mb-2 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300">
                 <RotateCcw size={18} />
               </div>
-              <h3 className="text-base font-black text-white">Recover @{data.handle}</h3>
-              <p className="text-xs text-slate-400 mt-1">
+              <h3 className="text-base font-black text-foreground">Recover @{data.handle}</h3>
+              <p className="text-xs text-(--text-muted) mt-1">
                 Admin emergency recovery. This reassigns ownership of this handle and its reverse lookup to the specified wallet.
               </p>
             </div>
 
             <div>
-              <label className="text-[11px] font-bold text-slate-300 uppercase block mb-1.5">
+              <label className="text-[11px] font-bold text-(--text-secondary) uppercase block mb-1.5">
                 New Target Owner Address
               </label>
               <input
                 value={recoverNewOwner}
                 onChange={(e) => setRecoverNewOwner(e.target.value)}
                 placeholder="Recipient wallet public key (base58)"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white/4 border border-white/10 text-xs font-mono text-white outline-none focus:border-purple-400/50"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-(--bg-subtle) border border-(--border) text-xs font-mono text-foreground outline-none focus:border-purple-400/50"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-2 mt-1">
               <button
                 onClick={() => setRecoverModalOpen(false)}
-                className="py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-white transition-all cursor-pointer"
+                className="py-2.5 rounded-xl bg-(--bg-subtle) hover:bg-(--bg-card-hover) text-xs font-bold text-white transition-all cursor-pointer"
               >
                 Cancel
               </button>

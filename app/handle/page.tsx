@@ -306,17 +306,17 @@ export function HandlePageContent() {
       <div className="px-4 py-4 flex flex-col gap-4">
         {/* User's Registered Identity Card */}
         {connected && loadingMyHandle && (
-          <div className="rounded-3xl p-5 bg-white/4 border border-white/10 flex items-center justify-center gap-2 text-xs text-indigo-300">
+          <div className="rounded-3xl p-5 bg-(--bg-subtle) border border-(--border) flex items-center justify-center gap-2 text-xs text-indigo-300">
             <Loader size={15} className="animate-spin" />
             <span>Resolving registered handle...</span>
           </div>
         )}
         {connected && !loadingMyHandle && myHandle && (
-          <div className="relative rounded-3xl p-5 bg-linear-to-br from-[#161D33] via-[#121728] to-[#0D101C] border-2 border-indigo-500/35 shadow-[0_8px_30px_rgba(99,102,241,0.25)] overflow-hidden backdrop-blur-2xl">
-            <div className="absolute -top-10 -right-10 w-36 h-36 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none" />
+          <div className="relative rounded-3xl p-5 bg-linear-to-br from-indigo-50/90 via-purple-50/40 to-slate-50 dark:from-[#161D33] dark:via-[#121728] dark:to-[#0D101C] border-2 border-indigo-500/35 shadow-[0_8px_30px_rgba(99,102,241,0.2)] dark:shadow-[0_8px_30px_rgba(99,102,241,0.25)] overflow-hidden backdrop-blur-2xl transition-colors">
+            <div className="absolute -top-10 -right-10 w-36 h-36 bg-indigo-500/15 dark:bg-indigo-500/20 rounded-full blur-2xl pointer-events-none" />
 
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
                 <ShieldCheck size={14} />
                 Your Primary Identity
               </span>
@@ -329,7 +329,7 @@ export function HandlePageContent() {
 
             <div className="flex items-center justify-between gap-3 mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-xl shadow-lg shadow-indigo-500/25 overflow-hidden border border-white/20">
+                <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-xl shadow-lg shadow-indigo-500/25 overflow-hidden border border-(--border-bright)">
                   {profilePhoto ? (
                     <img src={profilePhoto} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
@@ -337,8 +337,8 @@ export function HandlePageContent() {
                   )}
                 </div>
                 <div>
-                  <div className="text-xl font-black text-white tracking-tight">@{myHandle}</div>
-                  <div className="text-[11px] text-slate-400 font-mono">
+                  <div className="text-xl font-black text-foreground tracking-tight">@{myHandle}</div>
+                  <div className="text-[11px] text-(--text-muted) font-mono">
                     {publicKey
                       ? `${publicKey.toBase58().slice(0, 6)}...${publicKey.toBase58().slice(-4)}`
                       : ""}
@@ -348,11 +348,11 @@ export function HandlePageContent() {
 
               <button
                 onClick={copyMyHandle}
-                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 active:scale-95 transition-all cursor-pointer"
+                className="p-2 rounded-xl bg-black/5 dark:bg-(--bg-subtle) hover:bg-black/10 dark:hover:bg-(--bg-card-hover) text-(--text-secondary) hover:text-foreground border border-(--border) active:scale-95 transition-all cursor-pointer"
                 title="Copy @handle"
               >
                 {copiedHandle ? (
-                  <Check size={16} className="text-emerald-400" />
+                  <Check size={16} className="text-emerald-500 dark:text-emerald-400" />
                 ) : (
                   <Copy size={16} />
                 )}
@@ -363,7 +363,7 @@ export function HandlePageContent() {
             <div className="grid grid-cols-4 gap-2">
               <Link
                 href={`/handle/${myHandle}`}
-                className="py-2 px-2 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-all text-center"
+                className="py-2 px-2 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-400/40 text-indigo-700 dark:text-indigo-200 text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-all text-center"
               >
                 <Globe size={13} />
                 Profile
@@ -389,7 +389,7 @@ export function HandlePageContent() {
                   navigator.clipboard.writeText(shareUrl);
                   toast.success("Payment link copied!");
                 }}
-                className="py-2 px-2 rounded-xl bg-white/6 hover:bg-white/12 border border-white/10 text-white text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
+                className="py-2 px-2 rounded-xl bg-black/5 dark:bg-white/6 hover:bg-black/10 dark:hover:bg-white/12 border border-(--border) text-foreground text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
               >
                 <Share2 size={13} />
                 Share
@@ -399,7 +399,7 @@ export function HandlePageContent() {
                   triggerHaptic("tap");
                   setQrOpen(true);
                 }}
-                className="py-2 px-2 rounded-xl bg-white/6 hover:bg-white/12 border border-white/10 text-white text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
+                className="py-2 px-2 rounded-xl bg-black/5 dark:bg-white/6 hover:bg-black/10 dark:hover:bg-white/12 border border-(--border) text-foreground text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
               >
                 <QrCode size={13} />
                 QR
@@ -409,7 +409,7 @@ export function HandlePageContent() {
                   triggerHaptic("tap");
                   setTransferOpen(true);
                 }}
-                className="py-2 px-2 rounded-xl bg-white/6 hover:bg-white/12 border border-white/10 text-amber-300 text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
+                className="py-2 px-2 rounded-xl bg-black/5 dark:bg-white/6 hover:bg-black/10 dark:hover:bg-white/12 border border-(--border) text-amber-600 dark:text-amber-300 text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
               >
                 <ArrowRightLeft size={13} />
                 Transfer
@@ -419,42 +419,42 @@ export function HandlePageContent() {
         )}
 
         {/* Universal Handle Checker & Explorer Card */}
-        <Card className="p-5 flex flex-col gap-4 border-indigo-500/30 bg-linear-to-b from-[#13192B]/95 to-[#0F1322]/95 shadow-xl">
+        <Card className="p-5 flex flex-col gap-4 border-indigo-500/30 shadow-xl">
           <div>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-black text-white flex items-center gap-2">
-                <Search size={18} className="text-indigo-400" />
+              <h2 className="text-base font-black text-foreground flex items-center gap-2">
+                <Search size={18} className="text-indigo-500 dark:text-indigo-400" />
                 Handle Availability & Lookup
               </h2>
-              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-full">
                 Universal Checker
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-(--text-muted) mt-1">
               Search any handle to check availability on Solana Devnet or explore user pages.
             </p>
           </div>
 
           {/* Search Input */}
           <div
-            className={`flex items-center gap-2 px-4 py-3.5 rounded-2xl bg-white/4 border ${
+            className={`flex items-center gap-2 px-4 py-3.5 rounded-2xl bg-(--bg-subtle) border ${
               searchState === "available"
                 ? "border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.25)]"
                 : searchState === "taken"
                 ? "border-indigo-500/60 shadow-[0_0_20px_rgba(99,102,241,0.25)]"
                 : searchState === "reserved" || searchError
                 ? "border-rose-500/50"
-                : "border-white/12 hover:border-white/20"
+                : "border-(--border) hover:border-(--border-bright)"
             } transition-all`}
           >
-            <span className="text-lg font-black text-indigo-400 select-none">@</span>
+            <span className="text-lg font-black text-indigo-500 dark:text-indigo-400 select-none">@</span>
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => onSearchInputChange(e.target.value)}
               placeholder="search-or-check-handle"
               maxLength={32}
-              className="flex-1 bg-transparent border-none outline-none text-base font-bold text-white placeholder:text-slate-600 tracking-tight"
+              className="flex-1 bg-transparent border-none outline-none text-base font-bold text-foreground placeholder:text-(--text-muted) tracking-tight"
             />
             {searchTerm && (
               <button
@@ -464,28 +464,28 @@ export function HandlePageContent() {
                   setSearchError("");
                   setSearchOwner(null);
                 }}
-                className="text-slate-500 hover:text-slate-300 p-1 cursor-pointer"
+                className="text-(--text-muted) hover:text-foreground p-1 cursor-pointer"
               >
                 <X size={16} />
               </button>
             )}
             <div className="w-6 shrink-0 flex items-center justify-center">
               {searchState === "checking" && (
-                <Loader size={16} className="animate-spin text-indigo-400" />
+                <Loader size={16} className="animate-spin text-indigo-500 dark:text-indigo-400" />
               )}
               {searchState === "available" && (
-                <CheckCircle size={18} className="text-emerald-400" />
+                <CheckCircle size={18} className="text-emerald-500 dark:text-emerald-400" />
               )}
-              {searchState === "taken" && <User size={18} className="text-indigo-400" />}
+              {searchState === "taken" && <User size={18} className="text-indigo-500 dark:text-indigo-400" />}
               {(searchState === "reserved" || searchError) && (
-                <XCircle size={18} className="text-rose-400" />
+                <XCircle size={18} className="text-rose-500 dark:text-rose-400" />
               )}
             </div>
           </div>
 
           {/* Quick Suggestions Chips */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[11px] text-slate-500 font-medium">Try checking:</span>
+            <span className="text-[11px] text-(--text-muted) font-medium">Try checking:</span>
             {POPULAR_SEARCH_SUGGESTIONS.map((sug) => (
               <button
                 key={sug}
@@ -493,8 +493,8 @@ export function HandlePageContent() {
                 onClick={() => handleSuggestionClick(sug)}
                 className={`text-[11px] px-2 py-0.5 rounded-lg border font-medium transition-colors cursor-pointer ${
                   searchTerm === sug
-                    ? "bg-indigo-500/30 text-indigo-300 border-indigo-400/50"
-                    : "bg-white/3 text-slate-400 border-white/8 hover:text-white hover:bg-white/8"
+                    ? "bg-indigo-500/30 text-indigo-600 dark:text-indigo-300 border-indigo-400/50"
+                    : "bg-(--bg-subtle) text-(--text-muted) border-(--border) hover:text-foreground hover:bg-black/5 dark:hover:bg-(--bg-card-hover)"
                 }`}
               >
                 @{sug}
@@ -504,18 +504,18 @@ export function HandlePageContent() {
 
           {/* Dynamic Result Panel */}
           {searchState === "available" && searchTerm && (
-            <div className="p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/40 flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="p-4 rounded-2xl bg-emerald-500/10 dark:bg-emerald-950/30 border border-emerald-500/40 flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                     <CheckCircle size={16} />
                   </div>
                   <div>
-                    <div className="text-sm font-black text-white">@{searchTerm} is Available!</div>
-                    <div className="text-[10px] text-emerald-300">Ready to claim on Solana</div>
+                    <div className="text-sm font-black text-foreground">@{searchTerm} is Available!</div>
+                    <div className="text-[10px] text-emerald-600 dark:text-emerald-300">Ready to claim on Solana</div>
                   </div>
                 </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 uppercase">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-500/40 uppercase">
                   Available
                 </span>
               </div>
@@ -523,7 +523,7 @@ export function HandlePageContent() {
               {/* Action depending on wallet state */}
               {!connected ? (
                 <div className="flex flex-col gap-2 pt-1 border-t border-emerald-500/20">
-                  <p className="text-xs text-slate-300">
+                  <p className="text-xs text-(--text-secondary)">
                     Connect your Solana Devnet wallet to register this handle.
                   </p>
                   <div className="scale-95 origin-left">
@@ -534,7 +534,7 @@ export function HandlePageContent() {
                 <button
                   onClick={() => registerHandle(searchTerm)}
                   disabled={registering}
-                  className="w-full py-3.5 rounded-xl bg-linear-to-r from-emerald-500 to-teal-500 hover:brightness-110 active:scale-[0.99] text-slate-950 font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 transition-all cursor-pointer disabled:opacity-50"
+                  className="w-full py-3.5 rounded-xl bg-linear-to-r from-emerald-500 to-teal-500 hover:brightness-110 active:scale-[0.99] text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 transition-all cursor-pointer disabled:opacity-50"
                 >
                   {registering ? (
                     <>
@@ -547,10 +547,10 @@ export function HandlePageContent() {
                   )}
                 </button>
               ) : (
-                <div className="p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/30 text-xs text-slate-300 leading-relaxed">
-                  <div className="font-bold text-indigo-300 mb-0.5">Wallet Already Registered</div>
+                <div className="p-3 rounded-xl bg-indigo-500/10 dark:bg-indigo-950/40 border border-indigo-500/30 text-xs text-(--text-secondary) leading-relaxed">
+                  <div className="font-bold text-indigo-600 dark:text-indigo-300 mb-0.5">Wallet Already Registered</div>
                   Your current wallet already registered{" "}
-                  <span className="text-white font-bold">@{myHandle}</span>. To register @{searchTerm}
+                  <span className="text-foreground font-bold">@{myHandle}</span>. To register @{searchTerm}
                   , switch to a different wallet or transfer your existing handle.
                 </div>
               )}
@@ -558,15 +558,15 @@ export function HandlePageContent() {
           )}
 
           {searchState === "taken" && searchTerm && (
-            <div className="p-4 rounded-2xl bg-indigo-950/30 border border-indigo-500/40 flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="p-4 rounded-2xl bg-indigo-500/10 dark:bg-indigo-950/30 border border-indigo-500/40 flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-300 font-bold">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-300 font-bold">
                     @{searchTerm[0].toUpperCase()}
                   </div>
                   <div>
-                    <div className="text-sm font-black text-white">@{searchTerm} is Claimed</div>
-                    <div className="text-[10px] text-slate-400 font-mono">
+                    <div className="text-sm font-black text-foreground">@{searchTerm} is Claimed</div>
+                    <div className="text-[10px] text-(--text-muted) font-mono">
                       Owner:{" "}
                       {searchOwner
                         ? `${searchOwner.slice(0, 6)}...${searchOwner.slice(-4)}`
@@ -574,7 +574,7 @@ export function HandlePageContent() {
                     </div>
                   </div>
                 </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 uppercase">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border border-indigo-500/40 uppercase">
                   Registered
                 </span>
               </div>
@@ -622,13 +622,13 @@ export function HandlePageContent() {
           )}
 
           {searchState === "reserved" && searchTerm && (
-            <div className="p-4 rounded-2xl bg-amber-950/30 border border-amber-500/40 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
-              <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+            <div className="p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/40 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-500 dark:text-amber-400 shrink-0">
                 <AlertTriangle size={16} />
               </div>
               <div>
-                <div className="text-xs font-bold text-white">@{searchTerm} is Reserved</div>
-                <div className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
+                <div className="text-xs font-bold text-foreground">@{searchTerm} is Reserved</div>
+                <div className="text-[11px] text-(--text-muted) mt-0.5 leading-relaxed">
                   This handle is part of the protected DPI governance namespace and cannot be claimed
                   by individual wallets.
                 </div>
@@ -637,7 +637,7 @@ export function HandlePageContent() {
           )}
 
           {searchError && searchState !== "taken" && searchState !== "available" && (
-            <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
+            <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">
               <AlertTriangle size={14} className="shrink-0" />
               <span>{searchError}</span>
             </div>
@@ -646,18 +646,18 @@ export function HandlePageContent() {
 
         {/* Claim First Handle Call-To-Action for Unclaimed Users */}
         {connected && !myHandle && (
-          <Card className="p-5 border-indigo-500/30 bg-linear-to-br from-indigo-950/40 via-[#13192B] to-[#0F1322]">
-            <div className="flex items-center gap-2 text-indigo-400 font-bold text-sm mb-1">
+          <Card className="p-5 border-indigo-500/30">
+            <div className="flex items-center gap-2 text-indigo-500 dark:text-indigo-400 font-bold text-sm mb-1">
               <Sparkles size={16} />
               <span>You don&apos;t have a registered handle yet</span>
             </div>
-            <p className="text-xs text-slate-300 leading-relaxed mb-3">
+            <p className="text-xs text-(--text-secondary) leading-relaxed mb-3">
               Type your desired name in the checker above to check availability and register it
               permanently to your Solana wallet.
             </p>
-            <div className="text-[11px] text-slate-400 flex items-center gap-2 bg-white/3 p-2.5 rounded-xl border border-white/6 font-mono">
+            <div className="text-[11px] text-(--text-muted) flex items-center gap-2 bg-(--bg-subtle) p-2.5 rounded-xl border border-(--border) font-mono">
               <span>Your Wallet:</span>
-              <span className="text-indigo-300 font-bold">
+              <span className="text-indigo-600 dark:text-indigo-300 font-bold">
                 {publicKey
                   ? `${publicKey.toBase58().slice(0, 8)}...${publicKey.toBase58().slice(-6)}`
                   : ""}
@@ -667,8 +667,8 @@ export function HandlePageContent() {
         )}
 
         {/* Protocol Rules & Standards */}
-        <Card className="p-4 flex flex-col gap-2.5">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+        <Card className="p-4 flex flex-col gap-2.5 border-(--border)">
+          <div className="text-[11px] font-bold text-(--text-muted) uppercase tracking-wider mb-1">
             DPI Protocol Guidelines
           </div>
           {[
@@ -677,8 +677,8 @@ export function HandlePageContent() {
             "Instant Routing: Anyone can send SOL or SPL tokens directly using @handle.",
             "Transferable: Owners can transfer handle ownership to another wallet anytime.",
           ].map((r, i) => (
-            <div key={i} className="text-xs text-slate-300 flex items-start gap-2 leading-relaxed">
-              <span className="text-indigo-400 font-bold">·</span>
+            <div key={i} className="text-xs text-(--text-secondary) flex items-start gap-2 leading-relaxed">
+              <span className="text-indigo-500 dark:text-indigo-400 font-bold">·</span>
               <span>{r}</span>
             </div>
           ))}
@@ -737,7 +737,7 @@ export default function HandlePage() {
       fallback={
         <div className="w-full min-h-[60vh] flex flex-col items-center justify-center gap-3 p-8 text-indigo-400">
           <Loader className="animate-spin" size={28} />
-          <span className="text-xs text-slate-400">Loading handles...</span>
+          <span className="text-xs text-(--text-muted)">Loading handles...</span>
         </div>
       }
     >

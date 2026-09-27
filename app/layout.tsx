@@ -24,11 +24,12 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: [
-      { url: "/dpi-icon-square.png", type: "image/png" },
+      { url: "/dpi-icon-square.png", sizes: "1024x1024", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
       { url: "/favicon.ico", type: "image/x-icon" },
     ],
     apple: [
-      { url: "/dpi-icon-square.png", sizes: "180x180", type: "image/png" },
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
     ],
     shortcut: "/dpi-icon-square.png",
   },
@@ -74,7 +75,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="antialiased min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] relative selection:bg-indigo-500 selection:text-white transition-colors duration-200">
+      <body className="antialiased min-h-screen bg-background text-foreground relative selection:bg-indigo-500 selection:text-white transition-colors duration-200">
         <ThemeProvider>
           <ToastProvider>
             <SolanaWalletProvider>
@@ -94,7 +95,7 @@ export default function RootLayout({
                 display: "flex",
                 flexDirection: "column",
               }}
-              className="z-10 shadow-[0_0_50px_rgba(0,0,0,0.8)] border-x border-white/12 bg-[#06080F]/95"
+              className="z-10 shadow-[0_0_50px_rgba(0,0,0,0.15)] dark:shadow-[0_0_50px_rgba(0,0,0,0.8)] border-x border-(--border) bg-background transition-colors duration-200"
             >
               <main className="flex-1 w-full pb-20">
                 <ErrorBoundary>{children}</ErrorBoundary>

@@ -7,7 +7,7 @@ export const WalletMultiButton = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="h-10 px-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-xs font-semibold text-white/50 animate-pulse min-w-30">
+      <div className="h-10 px-4 rounded-xl bg-black/5 dark:bg-white/5 border border-(--border) flex items-center justify-center text-xs font-semibold text-(--text-muted) animate-pulse min-w-30">
         Connect Wallet
       </div>
     ),
