@@ -13,7 +13,9 @@ import { useToast } from "@/components/Toast";
 import { triggerHaptic } from "@/lib/haptics";
 import QRCodeModal from "@/components/QRCodeModal";
 import TokenFaucetModal from "@/components/TokenFaucetModal";
+import TransferHandleModal from "@/components/TransferHandleModal";
 import TransactionStepperModal, { StepperStage } from "@/components/TransactionStepperModal";
+import CopyableAddress from "@/components/CopyableAddress";
 import {
   Copy,
   CheckCircle,
@@ -59,8 +61,6 @@ export default function ProfilePage() {
 
   // Transfer Handle Modal State
   const [transferModalOpen, setTransferModalOpen] = useState(false);
-  const [newOwnerInput, setNewOwnerInput] = useState("");
-  const [transferring, setTransferring] = useState(false);
   const [stepperOpen, setStepperOpen] = useState(false);
   const [stepperStage, setStepperStage] = useState<StepperStage>("signing");
   const [txSig, setTxSig] = useState("");
@@ -96,8 +96,12 @@ export default function ProfilePage() {
   useEffect(() => {
     if (connected && publicKey) {
       fetchProfileData();
-      const stored = localStorage.getItem(`dpi_avatar_${publicKey.toBase58()}`);
-      setProfilePhoto(stored);
+      try {
+        const stored = localStorage.getItem(`dpi_avatar_${publicKey.toBase58()}`);
+        setProfilePhoto(stored);
+      } catch (e) {
+        console.warn("Failed to read avatar from localStorage", e);
+      }
     } else {
       setBalance(null);
       setHandle(null);
@@ -121,7 +125,11 @@ export default function ProfilePage() {
 
   const handleRemovePhoto = () => {
     if (!publicKey) return;
-    localStorage.removeItem(`dpi_avatar_${publicKey.toBase58()}`);
+    try {
+      localStorage.removeItem(`dpi_avatar_${publicKey.toBase58()}`);
+    } catch (e) {
+      console.warn("Failed to remove avatar from localStorage", e);
+    }
     setProfilePhoto(null);
     setPreviewOpen(false);
   };
@@ -193,7 +201,11 @@ export default function ProfilePage() {
 
       const data = await res.json();
       if (data.url) {
-        localStorage.setItem(`dpi_avatar_${publicKey.toBase58()}`, data.url);
+        try {
+          localStorage.setItem(`dpi_avatar_${publicKey.toBase58()}`, data.url);
+        } catch (storageErr) {
+          console.warn("Failed to persist avatar to localStorage:", storageErr);
+        }
         setProfilePhoto(data.url);
         setPreviewOpen(false);
         triggerHaptic("success");
@@ -220,59 +232,7 @@ export default function ProfilePage() {
     }
   };
 
-  const handleTransferSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!publicKey || !handle) return;
-    const cleanAddr = newOwnerInput.trim();
-    if (!cleanAddr) {
-      toast.error("Please enter a recipient wallet address.");
-      return;
-    }
 
-    try {
-      const recipientKey = new PublicKey(cleanAddr);
-      if (recipientKey.equals(publicKey)) {
-        toast.error("Recipient cannot be your current wallet.");
-        return;
-      }
-      if (frozen) {
-        toast.error("This handle is frozen. Transfers are currently disabled.");
-        return;
-      }
-
-      setTransferring(true);
-      setStepperStage("signing");
-      setStepperOpen(true);
-      triggerHaptic("selection");
-
-      const program = getDpiProgram(connection, wallet);
-      setStepperStage("broadcasting");
-      const sig = await transferHandle(program, wallet, handle, recipientKey);
-
-      setStepperStage("confirming");
-      await connection.confirmTransaction(sig, "confirmed");
-
-      setTxSig(sig);
-      setStepperStage("done");
-      triggerHaptic("success");
-      invalidateHandleCache(handle, publicKey);
-      invalidateHandleCache(undefined, recipientKey);
-      toast.success(
-        `@${handle} transferred to ${cleanAddr.slice(0, 6)}...${cleanAddr.slice(-4)}`,
-        "Transfer Successful 🎉"
-      );
-      setTransferModalOpen(false);
-      setNewOwnerInput("");
-      fetchProfileData();
-    } catch (err: any) {
-      triggerHaptic("error");
-      toast.error(parseAnchorError(err), "Transfer Failed");
-      setStepperOpen(false);
-    } finally {
-      setTransferring(false);
-      setTimeout(() => setStepperOpen(false), 1500);
-    }
-  };
 
   if (!connected) {
     return (
@@ -397,17 +357,12 @@ export default function ProfilePage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={copyAddress}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/4 border border-white/10 text-xs font-mono text-slate-300 hover:bg-white/8 active:scale-95 transition-all cursor-pointer"
-            >
-              {copied ? (
-                <CheckCircle size={13} className="text-emerald-400" />
-              ) : (
-                <Copy size={13} />
-              )}
-              {shortKey}
-            </button>
+            <CopyableAddress
+              address={publicKey ? publicKey.toBase58() : ""}
+              prefixLen={8}
+              suffixLen={6}
+              showExplorer={true}
+            />
 
             <button
               onClick={() => {
@@ -670,81 +625,16 @@ export default function ProfilePage() {
       />
 
       {/* Transfer Handle Modal */}
-      {transferModalOpen && handle && (
-        <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
-          onClick={() => !transferring && setTransferModalOpen(false)}
-        >
-          <div
-            className="relative max-w-sm w-full bg-[#111827] border border-white/16 rounded-3xl p-6 shadow-2xl flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
-                  <ArrowRightLeft size={18} />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white">Transfer @{handle}</h3>
-                  <p className="text-[11px] text-slate-400">Reassign ownership on Solana</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => !transferring && setTransferModalOpen(false)}
-                className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            {frozen && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center gap-2 text-rose-300 text-xs">
-                <AlertTriangle size={16} className="shrink-0 text-rose-400" />
-                <span>This handle is FROZEN by administrators. Transfers are locked.</span>
-              </div>
-            )}
-
-            <form onSubmit={handleTransferSubmit} className="flex flex-col gap-3">
-              <div>
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
-                  Recipient Solana Wallet Address
-                </label>
-                <input
-                  type="text"
-                  value={newOwnerInput}
-                  onChange={(e) => setNewOwnerInput(e.target.value)}
-                  placeholder="Base58 Solana address..."
-                  disabled={transferring || frozen}
-                  className="w-full bg-[#0A0E1A] border border-white/12 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-slate-600 outline-none focus:border-purple-500 font-mono transition-colors disabled:opacity-50"
-                />
-              </div>
-
-              <div className="p-3 rounded-xl bg-white/3 border border-white/8 text-[11px] text-slate-400 leading-relaxed">
-                ℹ️ Once transferred, you will forfeit ownership of <span className="text-white font-bold">@{handle}</span>. The recipient wallet must not already own a handle.
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 mt-1">
-                <button
-                  type="button"
-                  onClick={() => setTransferModalOpen(false)}
-                  disabled={transferring}
-                  className="py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-semibold cursor-pointer disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={transferring || frozen || !newOwnerInput.trim()}
-                  className="py-2.5 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all cursor-pointer disabled:opacity-50"
-                >
-                  {transferring ? <Loader size={14} className="animate-spin" /> : <ArrowRightLeft size={14} />}
-                  {transferring ? "Transferring…" : "Confirm Transfer"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {handle && (
+        <TransferHandleModal
+          isOpen={transferModalOpen}
+          onClose={() => setTransferModalOpen(false)}
+          handle={handle}
+          isFrozen={Boolean(frozen)}
+          onSuccess={() => {
+            fetchProfileData();
+          }}
+        />
       )}
 
       {/* Stepper Modal */}
@@ -753,6 +643,7 @@ export default function ProfilePage() {
         stage={stepperStage}
         txTitle="Transferring Handle"
         txSubtitle={`Reassigning @${handle} ownership on Solana`}
+        txSig={txSig}
       />
     </div>
   );

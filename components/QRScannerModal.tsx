@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { X, Camera, AlertCircle, Loader, Flashlight } from "lucide-react";
+import { X, AlertCircle, Loader } from "lucide-react";
 import { triggerHaptic } from "@/lib/haptics";
 import { useToast } from "@/components/Toast";
 
@@ -52,7 +52,7 @@ export default function QRScannerModal({
           await videoRef.current.play();
           setLoading(false);
         }
-      } catch (err: any) {
+      } catch {
         if (!isSubscribed) return;
         setLoading(false);
         setError("Camera permission denied or camera unavailable.");

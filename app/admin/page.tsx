@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import Card from "@/components/Card";
 import StatusBadge from "@/components/StatusBadge";
 import TransactionStepperModal, { StepperStage } from "@/components/TransactionStepperModal";
+import CopyableAddress from "@/components/CopyableAddress";
 import { WalletMultiButton } from "@/components/WalletButton";
 import { useToast } from "@/components/Toast";
 import { triggerHaptic } from "@/lib/haptics";
@@ -24,7 +25,10 @@ import {
   getConfigPda,
   parseAnchorError,
   validateHandleInput,
+  confirmTx,
+  PROGRAM_ID,
 } from "@/lib/dpi-program";
+import { getExplorerUrl, useNetwork } from "@/components/NetworkContext";
 import {
   Shield,
   ShieldCheck,
@@ -39,17 +43,32 @@ import {
   AlertTriangle,
   Search,
   UserCheck,
+  Activity,
+  ExternalLink,
+  Clock,
 } from "lucide-react";
 
-type AdminTab = "moderation" | "reservations" | "recovery" | "governance";
+type AdminTab = "moderation" | "reservations" | "recovery" | "governance" | "activity";
+
+interface AdminActivityEntry {
+  signature: string;
+  blockTime: number | null;
+  slot: number;
+  status: "success" | "failed";
+}
 
 export default function AdminConsolePage() {
   const { connection } = useConnection();
   const wallet = useWallet();
   const { publicKey, connected } = wallet;
   const toast = useToast();
+  const { network } = useNetwork();
 
   const [activeTab, setActiveTab] = useState<AdminTab>("moderation");
+
+  // Tab 5: Activity Log State (FEAT-021)
+  const [activityLog, setActivityLog] = useState<AdminActivityEntry[]>([]);
+  const [activityLoading, setActivityLoading] = useState(false);
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [configAdmin, setConfigAdmin] = useState<PublicKey | null>(null);
   const [isConfigInitialized, setIsConfigInitialized] = useState(false);
@@ -84,6 +103,34 @@ export default function AdminConsolePage() {
 
   // Tab 4: Governance State
   const [newAdminKey, setNewAdminKey] = useState("");
+
+  // FEAT-021: Fetch Admin Activity Log from program signatures
+  const loadActivityLog = useCallback(async () => {
+    if (!connection) return;
+    setActivityLoading(true);
+    try {
+      const sigs = await connection.getSignaturesForAddress(PROGRAM_ID, { limit: 25 });
+      const entries: AdminActivityEntry[] = sigs.map((s) => ({
+        signature: s.signature,
+        blockTime: s.blockTime ?? null,
+        slot: s.slot,
+        status: s.err ? "failed" : "success",
+      }));
+      setActivityLog(entries);
+    } catch {
+      toast.error("Failed to load activity log");
+    } finally {
+      setActivityLoading(false);
+    }
+  }, [connection, toast]);
+
+  // Load activity when switching to that tab
+  useEffect(() => {
+    if (activeTab === "activity") {
+      loadActivityLog();
+    }
+  }, [activeTab, loadActivityLog]);
+
   const [transferAdminLoading, setTransferAdminLoading] = useState(false);
   const [initLoading, setInitLoading] = useState(false);
 
@@ -163,7 +210,7 @@ export default function AdminConsolePage() {
       setStepperStage("broadcasting");
       const tx = await freezeHandle(program, wallet, modHandleData.handle);
       setStepperStage("confirming");
-      await connection.confirmTransaction(tx, "confirmed");
+      await confirmTx(connection, tx, "confirmed");
       setStepperStage("done");
       toast.success(`@${modHandleData.handle} is now FROZEN.`);
       triggerHaptic("success");
@@ -192,7 +239,7 @@ export default function AdminConsolePage() {
       setStepperStage("broadcasting");
       const tx = await unfreezeHandle(program, wallet, modHandleData.handle);
       setStepperStage("confirming");
-      await connection.confirmTransaction(tx, "confirmed");
+      await confirmTx(connection, tx, "confirmed");
       setStepperStage("done");
       toast.success(`@${modHandleData.handle} is now ACTIVE.`);
       triggerHaptic("success");
@@ -228,7 +275,7 @@ export default function AdminConsolePage() {
       setStepperStage("broadcasting");
       const tx = await reserveHandle(program, wallet, clean);
       setStepperStage("confirming");
-      await connection.confirmTransaction(tx, "confirmed");
+      await confirmTx(connection, tx, "confirmed");
       setStepperStage("done");
       toast.success(`@${clean} successfully reserved!`);
       triggerHaptic("success");
@@ -278,7 +325,7 @@ export default function AdminConsolePage() {
       setStepperStage("broadcasting");
       const tx = await batchReserveHandles(program, wallet, parsedBatchHandles);
       setStepperStage("confirming");
-      await connection.confirmTransaction(tx, "confirmed");
+      await confirmTx(connection, tx, "confirmed");
       setStepperStage("done");
       toast.success(`Successfully reserved ${parsedBatchHandles.length} handles!`);
       triggerHaptic("success");
@@ -321,7 +368,7 @@ export default function AdminConsolePage() {
       setStepperStage("broadcasting");
       const tx = await recoverHandle(program, wallet, clean, newOwnerKey);
       setStepperStage("confirming");
-      await connection.confirmTransaction(tx, "confirmed");
+      await confirmTx(connection, tx, "confirmed");
       setStepperStage("done");
       toast.success(`@${clean} has been reassigned successfully!`);
       triggerHaptic("success");
@@ -364,7 +411,7 @@ export default function AdminConsolePage() {
       setStepperStage("broadcasting");
       const tx = await updateAdminConfig(program, wallet, newAdminPubkey);
       setStepperStage("confirming");
-      await connection.confirmTransaction(tx, "confirmed");
+      await confirmTx(connection, tx, "confirmed");
       setStepperStage("done");
       toast.success("Admin authority transferred!");
       triggerHaptic("success");
@@ -394,7 +441,7 @@ export default function AdminConsolePage() {
       setStepperStage("broadcasting");
       const tx = await initConfig(program, wallet);
       setStepperStage("confirming");
-      await connection.confirmTransaction(tx, "confirmed");
+      await confirmTx(connection, tx, "confirmed");
       setStepperStage("done");
       toast.success("Protocol Config Initialized! You are now admin.");
       triggerHaptic("success");
@@ -518,12 +565,13 @@ export default function AdminConsolePage() {
         {connected && isConfigInitialized && isAdmin && (
           <div className="flex flex-col gap-5">
             {/* Tab Navigation */}
-            <div className="grid grid-cols-4 gap-1.5 p-1 rounded-2xl bg-[#0F1424] border border-white/10">
+            <div className="grid grid-cols-5 gap-1 p-1 rounded-2xl bg-[#0F1424] border border-white/10">
               {[
-                { id: "moderation", label: "Moderation", icon: Shield },
+                { id: "moderation", label: "Moderate", icon: Shield },
                 { id: "reservations", label: "Reserve", icon: BookmarkPlus },
                 { id: "recovery", label: "Recovery", icon: RefreshCw },
                 { id: "governance", label: "Gov", icon: KeyRound },
+                { id: "activity", label: "Activity", icon: Activity },
               ].map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
@@ -531,13 +579,13 @@ export default function AdminConsolePage() {
                     triggerHaptic("tap");
                     setActiveTab(id as AdminTab);
                   }}
-                  className={`flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
+                  className={`flex flex-col items-center justify-center gap-1 py-2 px-0.5 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${
                     activeTab === id
                       ? "bg-purple-600 text-white shadow-md shadow-purple-500/25"
                       : "text-slate-400 hover:text-white"
                   }`}
                 >
-                  <Icon size={15} />
+                  <Icon size={14} />
                   <span>{label}</span>
                 </button>
               ))}
@@ -586,8 +634,14 @@ export default function AdminConsolePage() {
                           <div className="text-base font-black text-white">
                             @{modHandleData.handle}
                           </div>
-                          <div className="text-xs text-slate-400 font-mono mt-0.5">
-                            Owner: {modHandleData.owner.slice(0, 6)}...{modHandleData.owner.slice(-4)}
+                          <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-400">
+                            <span>Owner:</span>
+                            <CopyableAddress
+                              address={modHandleData.owner}
+                              prefixLen={6}
+                              suffixLen={4}
+                              showExplorer={true}
+                            />
                           </div>
                         </div>
                         {modHandleData.frozen ? (
@@ -850,6 +904,93 @@ export default function AdminConsolePage() {
                     </div>
                   </div>
                 </Card>
+              </div>
+            )}
+
+            {/* TAB 5: ACTIVITY LOG (FEAT-021) */}
+            {activeTab === "activity" && (
+              <div className="flex flex-col gap-4 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                    <Activity size={16} className="text-purple-400" />
+                    Admin Activity Log
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => { triggerHaptic("tap"); loadActivityLog(); }}
+                    disabled={activityLoading}
+                    className="flex items-center gap-1.5 text-xs font-bold text-purple-300 hover:text-white px-2.5 py-1 rounded-lg bg-purple-500/20 border border-purple-400/30 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {activityLoading ? <Loader size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                    Refresh
+                  </button>
+                </div>
+
+                <Card className="overflow-hidden border-white/15">
+                  {activityLoading ? (
+                    <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-400">
+                      <Loader size={18} className="animate-spin text-purple-400" />
+                      Loading on-chain activity...
+                    </div>
+                  ) : activityLog.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center gap-2 py-10 text-xs text-slate-500">
+                      <Activity size={28} className="text-slate-600" />
+                      No admin transactions found
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-white/6">
+                      {activityLog.map((entry) => {
+                        const date = entry.blockTime
+                          ? new Date(entry.blockTime * 1000)
+                          : null;
+                        const timeStr = date
+                          ? date.toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+                          : `Slot #${entry.slot}`;
+                        return (
+                          <div
+                            key={entry.signature}
+                            className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-white/3 transition-colors"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className={`w-2 h-2 rounded-full shrink-0 ${
+                                entry.status === "success" ? "bg-emerald-400" : "bg-rose-400"
+                              }`} />
+                              <div className="min-w-0">
+                                <div className="text-xs font-mono text-white truncate">
+                                  {entry.signature.slice(0, 16)}...{entry.signature.slice(-8)}
+                                </div>
+                                <div className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                                  <Clock size={9} />
+                                  {timeStr}
+                                  <span className={`ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                                    entry.status === "success"
+                                      ? "bg-emerald-500/20 text-emerald-400"
+                                      : "bg-rose-500/20 text-rose-400"
+                                  }`}>
+                                    {entry.status}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <a
+                              href={getExplorerUrl("tx", entry.signature, network)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1.5 rounded-lg bg-white/5 hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-300 transition-colors shrink-0"
+                              title="View on Solana Explorer"
+                            >
+                              <ExternalLink size={13} />
+                            </a>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </Card>
+
+                <p className="text-[10px] text-slate-500 text-center px-2">
+                  Showing recent program-level transactions on the DPI Protocol ID. All admin actions (freeze, reserve, recover, governance) are on-chain and publicly verifiable.
+                </p>
               </div>
             )}
           </div>

@@ -41,6 +41,31 @@
   --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
 }
 
+:root[data-theme="light"] {
+  --bg-base: #F8FAFC;
+  --bg-subtle: #EDF2F7;
+  --bg-card: rgba(255, 255, 255, 0.9);
+  --bg-card-hover: rgba(241, 245, 249, 0.95);
+  --bg-glass: rgba(255, 255, 255, 0.85);
+  --bg-glass-strong: rgba(255, 255, 255, 0.95);
+  --bg-elevated: #FFFFFF;
+
+  --border: rgba(0, 0, 0, 0.12);
+  --border-subtle: rgba(0, 0, 0, 0.06);
+  --border-bright: rgba(0, 0, 0, 0.22);
+  --border-focus: rgba(99, 102, 241, 0.6);
+  --border-glow: rgba(168, 85, 247, 0.35);
+
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.12);
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+}
+
 @theme inline {
   --color-background: var(--bg-base);
   --color-foreground: var(--text-primary);
@@ -104,6 +129,12 @@ html, body {
   100% {
     background-position: 200% 0;
   }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0.03) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite ease-in-out;
 }
 
 .glass-panel {
@@ -189,3 +220,36 @@ html, body {
   background: rgba(255, 255, 255, 0.1) !important;
   border-radius: 50% !important;
 }
+
+/* FEAT-050: Onboarding progress card pulse */
+@keyframes onboard-pulse {
+  0%, 100% { border-color: rgba(99, 102, 241, 0.3); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+  50% { border-color: rgba(99, 102, 241, 0.5); box-shadow: 0 0 20px rgba(99, 102, 241, 0.15); }
+}
+
+/* FEAT-039: Transaction Success Confetti */
+@keyframes confetti-fall {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(0.6);
+  }
+  20% {
+    opacity: 1;
+    transform: translate3d(calc(var(--confetti-x) * 0.4), calc(var(--confetti-y) * 0.2), 0) rotate(calc(var(--confetti-angle) * 0.5)) scale(1.1);
+  }
+  80% {
+    opacity: 0.9;
+    transform: translate3d(var(--confetti-x), calc(var(--confetti-y) * 0.8), 0) rotate(var(--confetti-angle)) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(calc(var(--confetti-x) * 1.1), var(--confetti-y), 0) rotate(calc(var(--confetti-angle) * 1.5)) scale(0.8);
+  }
+}
+
+.animate-confetti-fall {
+  animation-name: confetti-fall;
+  animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
+  animation-fill-mode: forwards;
+}
+

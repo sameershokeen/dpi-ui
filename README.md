@@ -4,8 +4,6 @@
 
 A next-generation decentralized identity, payment routing, and handle registry Web3 application built on Solana. DPI allows users to send and receive SOL and SPL tokens using human-readable `@handles` (e.g., `@alex`, `@satoshi`) instead of complex 44-character base58 wallet addresses.
 
-![DPI Preview](vison.webp)
-
 ---
 
 ## 🚀 Key Features
@@ -146,7 +144,24 @@ const [reservedPDA] = PublicKey.findProgramAddressSync(
 - **Package Manager**: `npm`, `pnpm`, or `yarn`
 - **Solana Browser Wallet**: [Phantom](https://phantom.app/), [Solflare](https://solflare.com/), or [Backpack](https://backpack.app/) set to **Devnet**.
 
-### 2. Installation & Run
+### 2. Environment Variables Setup
+
+Copy the template and provide your API keys:
+
+```bash
+cp .env.example .env.local
+```
+
+| Variable | Description | Required |
+|---|---|---|
+| `NEXT_PUBLIC_HELIUS_RPC_URL` | Solana Devnet RPC endpoint. Falls back to public Solana devnet if omitted. | No |
+| `NEXT_PUBLIC_APP_URL` | Base URL for share links and public handle vanity routes (e.g. `http://localhost:3000`). | No |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name for profile photo uploads. | Yes (for photo upload) |
+| `CLOUDINARY_API_KEY` | Cloudinary API Key. | Yes (for photo upload) |
+| `CLOUDINARY_API_SECRET` | Cloudinary API Secret for server-side upload signature generation. | Yes (for photo upload) |
+| `GITHUB_ACCESS_TOKEN` | Optional developer access token for GitHub integration. | No |
+
+### 3. Installation & Run
 
 ```bash
 # 1. Clone the repository
@@ -162,7 +177,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 3. Production Build & Lint
+### 4. Production Build & Lint
 
 ```bash
 # Typecheck

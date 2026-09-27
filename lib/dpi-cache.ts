@@ -1,9 +1,9 @@
 import { Connection, PublicKey } from "@solana/web3.js";
 import {
-  getHandleRegistryPDA,
-  getReverseLookupPDA,
+  getHandlePda,
+  getReverseLookupPda,
   getDpiProgram,
-} from "./dpi-program";
+} from "./dpi-program.ts";
 
 interface CacheEntry<T> {
   data: T;
@@ -14,25 +14,73 @@ const handleCache = new Map<string, CacheEntry<{ owner: string; frozen: boolean 
 const reverseCache = new Map<string, CacheEntry<string | null>>();
 const CACHE_TTL_MS = 60 * 1000; // 60 seconds
 
+// Helper to safely access sessionStorage
+function getSessionItem<T>(key: string): CacheEntry<T> | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed.expiry === "number") {
+      return parsed as CacheEntry<T>;
+    }
+  } catch {
+    // Ignore storage parse/access errors
+  }
+  return null;
+}
+
+function setSessionItem<T>(key: string, entry: CacheEntry<T>): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(key, JSON.stringify(entry));
+  } catch {
+    // Ignore storage quota errors
+  }
+}
+
+function removeSessionItem(key: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(key);
+  } catch {
+    // Ignore
+  }
+}
+
 export async function lookupHandleCached(
   connection: Connection,
-  handle: string
+  handle: string,
+  skipCache: boolean = false
 ): Promise<{ owner: string; frozen: boolean } | null> {
   const normalized = handle.toLowerCase().trim();
-  const cached = handleCache.get(normalized);
   const now = Date.now();
 
-  if (cached && cached.expiry > now) {
-    return cached.data;
+  if (!skipCache) {
+    // 1. Check in-memory cache
+    const cached = handleCache.get(normalized);
+    if (cached && cached.expiry > now) {
+      return cached.data;
+    }
+
+    // 2. Check sessionStorage fallback
+    const sessionCached = getSessionItem<{ owner: string; frozen: boolean } | null>(`dpi_h_${normalized}`);
+    if (sessionCached && sessionCached.expiry > now) {
+      handleCache.set(normalized, sessionCached);
+      return sessionCached.data;
+    }
   }
 
+  // 3. Query on-chain RPC
   try {
-    const [handlePDA] = getHandleRegistryPDA(normalized);
+    const [handlePDA] = getHandlePda(normalized);
     const program = getDpiProgram(connection);
     const acc = await program.account.handleRegistry.fetchNullable(handlePDA);
 
     if (!acc) {
-      handleCache.set(normalized, { data: null, expiry: now + CACHE_TTL_MS });
+      const entry = { data: null, expiry: now + CACHE_TTL_MS };
+      handleCache.set(normalized, entry);
+      setSessionItem(`dpi_h_${normalized}`, entry);
       return null;
     }
 
@@ -40,7 +88,9 @@ export async function lookupHandleCached(
       owner: acc.owner.toBase58(),
       frozen: Boolean(acc.frozen),
     };
-    handleCache.set(normalized, { data: result, expiry: now + CACHE_TTL_MS });
+    const entry = { data: result, expiry: now + CACHE_TTL_MS };
+    handleCache.set(normalized, entry);
+    setSessionItem(`dpi_h_${normalized}`, entry);
     return result;
   } catch (err) {
     console.warn("Error resolving handle:", err);
@@ -53,25 +103,38 @@ export async function lookupReverseCached(
   owner: PublicKey
 ): Promise<string | null> {
   const keyStr = owner.toBase58();
-  const cached = reverseCache.get(keyStr);
   const now = Date.now();
 
+  // 1. Check in-memory cache
+  const cached = reverseCache.get(keyStr);
   if (cached && cached.expiry > now) {
     return cached.data;
   }
 
+  // 2. Check sessionStorage fallback
+  const sessionCached = getSessionItem<string | null>(`dpi_r_${keyStr}`);
+  if (sessionCached && sessionCached.expiry > now) {
+    reverseCache.set(keyStr, sessionCached);
+    return sessionCached.data;
+  }
+
+  // 3. Query on-chain RPC
   try {
-    const [reversePDA] = getReverseLookupPDA(owner);
+    const [reversePDA] = getReverseLookupPda(owner);
     const program = getDpiProgram(connection);
     const acc = await program.account.reverseLookup.fetchNullable(reversePDA);
 
     if (!acc || !acc.handle) {
-      reverseCache.set(keyStr, { data: null, expiry: now + CACHE_TTL_MS });
+      const entry = { data: null, expiry: now + CACHE_TTL_MS };
+      reverseCache.set(keyStr, entry);
+      setSessionItem(`dpi_r_${keyStr}`, entry);
       return null;
     }
 
     const handleStr = acc.handle;
-    reverseCache.set(keyStr, { data: handleStr, expiry: now + CACHE_TTL_MS });
+    const entry = { data: handleStr, expiry: now + CACHE_TTL_MS };
+    reverseCache.set(keyStr, entry);
+    setSessionItem(`dpi_r_${keyStr}`, entry);
     return handleStr;
   } catch (err) {
     console.warn("Error resolving reverse lookup:", err);
@@ -81,9 +144,13 @@ export async function lookupReverseCached(
 
 export function invalidateHandleCache(handle?: string, owner?: PublicKey) {
   if (handle) {
-    handleCache.delete(handle.toLowerCase().trim());
+    const normalized = handle.toLowerCase().trim();
+    handleCache.delete(normalized);
+    removeSessionItem(`dpi_h_${normalized}`);
   }
   if (owner) {
-    reverseCache.delete(owner.toBase58());
+    const keyStr = owner.toBase58();
+    reverseCache.delete(keyStr);
+    removeSessionItem(`dpi_r_${keyStr}`);
   }
 }

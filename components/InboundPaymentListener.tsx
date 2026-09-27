@@ -5,6 +5,8 @@ import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { useToast } from "@/components/Toast";
 import { triggerHaptic } from "@/lib/haptics";
+import { playNotificationSound } from "@/lib/sounds";
+import { getNotificationSettings } from "@/components/NotificationPreferencesModal";
 
 export default function InboundPaymentListener() {
   const { publicKey, connected } = useWallet();
@@ -56,12 +58,37 @@ export default function InboundPaymentListener() {
             const diffLamports = newBalance - prevBalanceRef.current;
             const diffSol = diffLamports / LAMPORTS_PER_SOL;
 
-            if (diffSol >= 0.0001) {
+            const notifSettings = getNotificationSettings();
+
+            if (diffSol >= notifSettings.minAmountSol) {
               triggerHaptic("success");
-              toast.success(
-                `Received +${diffSol.toFixed(4)} SOL on your wallet!`,
-                "Incoming Payment Received 💸"
-              );
+              playNotificationSound();
+
+              if (notifSettings.inboundEnabled) {
+                toast.success(
+                  `Received +${diffSol.toFixed(4)} SOL on your wallet!`,
+                  "Incoming Payment Received 💸"
+                );
+              }
+
+              // FEAT-008: Native Browser Push Notification
+              if (
+                notifSettings.pushEnabled &&
+                typeof window !== "undefined" &&
+                "Notification" in window &&
+                Notification.permission === "granted"
+              ) {
+                try {
+                  const notif = new Notification("DPI Payment Received 💸", {
+                    body: `Received +${diffSol.toFixed(4)} SOL on your address.`,
+                    icon: "/dpi-icon-square.png",
+                    tag: "dpi-payment",
+                  });
+                  notif.onclick = () => {
+                    window.focus();
+                  };
+                } catch {}
+              }
             }
           }
           prevBalanceRef.current = newBalance;

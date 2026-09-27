@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Globe, Check, Server, ShieldAlert } from "lucide-react";
+import { X, Globe, Check, Server } from "lucide-react";
 import { useNetwork, CLUSTER_CONFIG, SolanaCluster } from "@/components/NetworkContext";
 import { triggerHaptic } from "@/lib/haptics";
 
@@ -22,12 +22,14 @@ export default function NetworkSwitcherModal({
   const clusters: SolanaCluster[] = ["devnet", "mainnet-beta", "testnet"];
 
   const handleSelectCluster = (c: SolanaCluster) => {
+    triggerHaptic("selection");
     setNetwork(c);
     onClose();
   };
 
   const handleSaveCustom = (e: React.FormEvent) => {
     e.preventDefault();
+    triggerHaptic("selection");
     setCustomRpcUrl(customInput);
     onClose();
   };

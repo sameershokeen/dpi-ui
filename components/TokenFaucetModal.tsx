@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Coins, ExternalLink, Copy, Check, Sparkles } from "lucide-react";
+import { X, Coins, ExternalLink, Copy, Check } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { triggerHaptic } from "@/lib/haptics";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -89,18 +89,22 @@ export default function TokenFaucetModal({
           </p>
         </div>
 
-        {publicKey && (
+        {publicKey ? (
           <button
             onClick={copyWalletAddr}
             className="flex items-center justify-between p-2.5 rounded-xl bg-white/4 border border-white/10 text-xs text-slate-300 hover:bg-white/8 transition-colors cursor-pointer"
           >
-            <span className="truncate max-w-200px font-mono text-[11px]">
+            <span className="truncate max-w-[200px] font-mono text-[11px]">
               {publicKey.toBase58().slice(0, 10)}...{publicKey.toBase58().slice(-8)}
             </span>
             <span className="text-indigo-400 font-bold text-[11px] flex items-center gap-1 shrink-0">
               <Copy size={11} /> Copy Address
             </span>
           </button>
+        ) : (
+          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-xs text-amber-300 flex items-center gap-2">
+            <span>Connect your wallet to copy your address for faucets.</span>
+          </div>
         )}
 
         <div className="flex flex-col gap-2.5">

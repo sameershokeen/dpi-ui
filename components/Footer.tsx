@@ -2,12 +2,46 @@
 
 import { PROGRAM_ID } from "@/lib/dpi-program";
 import { useNetwork } from "@/components/NetworkContext";
+import { useConnection } from "@solana/wallet-adapter-react";
+import { useState, useEffect } from "react";
 import { ExternalLink, Code2, BookOpen, ShieldCheck, Zap } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
 export default function Footer() {
   const { network } = useNetwork();
+  const { connection } = useConnection();
+  const [rpcLatency, setRpcLatency] = useState<number | null>(null);
+  const [rpcStatus, setRpcStatus] = useState<"healthy" | "slow" | "offline">("healthy");
+
+  useEffect(() => {
+    let ignore = false;
+    async function probeRpc() {
+      if (!connection) return;
+      const start = performance.now();
+      try {
+        await connection.getLatestBlockhash("confirmed");
+        const elapsed = Math.round(performance.now() - start);
+        if (!ignore) {
+          setRpcLatency(elapsed);
+          setRpcStatus(elapsed < 800 ? "healthy" : "slow");
+        }
+      } catch {
+        if (!ignore) {
+          setRpcStatus("offline");
+          setRpcLatency(null);
+        }
+      }
+    }
+
+    probeRpc();
+    const interval = setInterval(probeRpc, 20000);
+    return () => {
+      ignore = true;
+      clearInterval(interval);
+    };
+  }, [connection]);
+
   const clusterParam = network === "mainnet-beta" ? "" : `?cluster=${network}`;
   const explorerUrl = `https://explorer.solana.com/address/${PROGRAM_ID.toBase58()}${clusterParam}`;
 
@@ -16,7 +50,7 @@ export default function Footer() {
   return (
     <footer className="w-full mt-auto border-t border-white/8 bg-[#070A12]/90 backdrop-blur-xl px-4 py-6 text-xs text-slate-400">
       <div className="flex flex-col gap-4">
-        {/* Protocol Identity & Status */}
+        {/* Protocol Identity & Live Status */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="relative w-6 h-6 rounded-lg overflow-hidden border border-indigo-500/30 shadow-sm bg-[#090B10] shrink-0">
@@ -32,9 +66,33 @@ export default function Footer() {
               DPI Registry
             </span>
           </div>
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-bold text-emerald-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>On-Chain Verified</span>
+
+          {/* FEAT-034: Live RPC Latency & Health */}
+          <div
+            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-colors ${
+              rpcStatus === "healthy"
+                ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
+                : rpcStatus === "slow"
+                ? "bg-amber-500/15 border-amber-500/30 text-amber-400"
+                : "bg-rose-500/15 border-rose-500/30 text-rose-400"
+            }`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                rpcStatus === "healthy"
+                  ? "bg-emerald-400"
+                  : rpcStatus === "slow"
+                  ? "bg-amber-400"
+                  : "bg-rose-400"
+              }`}
+            />
+            <span>
+              {rpcStatus === "healthy"
+                ? `RPC Healthy (${rpcLatency ?? "~"}ms)`
+                : rpcStatus === "slow"
+                ? `RPC Latency High (${rpcLatency}ms)`
+                : "RPC Unreachable"}
+            </span>
           </div>
         </div>
 

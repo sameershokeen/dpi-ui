@@ -6,6 +6,9 @@ import BottomNav from "@/components/BottomNav";
 import Footer from "@/components/Footer";
 import { ToastProvider } from "@/components/Toast";
 import ProtocolEventListener from "@/components/ProtocolEventListener";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import CommandPalette from "@/components/CommandPalette";
+import { ThemeProvider } from "@/components/ThemeContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -71,10 +74,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="antialiased min-h-screen bg-[#06080F] text-[#FFFFFF] relative selection:bg-indigo-500 selection:text-white">
-        <ToastProvider>
-          <SolanaWalletProvider>
-            {/* Ambient Lighting Gradients (vison.webp aesthetic) */}
+      <body className="antialiased min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] relative selection:bg-indigo-500 selection:text-white transition-colors duration-200">
+        <ThemeProvider>
+          <ToastProvider>
+            <SolanaWalletProvider>
+            {/* Ambient Lighting Gradients */}
             <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
               <div className="absolute inset-0 ambient-glow-top" />
               <div className="absolute inset-0 ambient-glow-bottom" />
@@ -92,14 +96,19 @@ export default function RootLayout({
               }}
               className="z-10 shadow-[0_0_50px_rgba(0,0,0,0.8)] border-x border-white/12 bg-[#06080F]/95"
             >
-              <main className="flex-1 w-full pb-20">{children}</main>
+              <main className="flex-1 w-full pb-20">
+                <ErrorBoundary>{children}</ErrorBoundary>
+              </main>
               <Footer />
             </div>
             <BottomNav />
             <ProtocolEventListener />
+            {/* FEAT-045: Global Keyboard Command Palette (Cmd+K) */}
+            <CommandPalette />
           </SolanaWalletProvider>
         </ToastProvider>
-      </body>
-    </html>
+      </ThemeProvider>
+    </body>
+  </html>
   );
 }

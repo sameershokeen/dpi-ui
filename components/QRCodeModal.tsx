@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Copy, CheckCircle, ExternalLink, Share2, QrCode } from "lucide-react";
+import { X, Copy, CheckCircle, Share2, QrCode } from "lucide-react";
 import { triggerHaptic } from "@/lib/haptics";
 import { useToast } from "@/components/Toast";
 

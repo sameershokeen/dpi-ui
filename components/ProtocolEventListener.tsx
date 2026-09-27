@@ -14,9 +14,17 @@ export default function ProtocolEventListener() {
   useEffect(() => {
     if (!connection) return;
 
+    if (cleanupRef.current) {
+      cleanupRef.current();
+      cleanupRef.current = null;
+    }
+
+    let isSubscribed = true;
+
     try {
       const program = getDpiProgram(connection);
       const unsubscribe = initProtocolEventListener(program, (eventName, payload) => {
+        if (!isSubscribed) return;
         const eventData = payload?.event || payload || {};
 
         switch (eventName) {
@@ -80,6 +88,7 @@ export default function ProtocolEventListener() {
     }
 
     return () => {
+      isSubscribed = false;
       if (cleanupRef.current) {
         cleanupRef.current();
         cleanupRef.current = null;

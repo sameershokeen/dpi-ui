@@ -43,8 +43,19 @@ export const CLUSTER_CONFIG: Record<
   },
 };
 
+export function getExplorerUrl(
+  type: "tx" | "address" | "block",
+  value: string,
+  network: SolanaCluster = "devnet"
+): string {
+  const clusterSuffix = network === "mainnet-beta" ? "" : `?cluster=${network}`;
+  return `https://explorer.solana.com/${type}/${value}${clusterSuffix}`;
+}
+
 export function NetworkProvider({ children }: { children: ReactNode }) {
-  const [network, setNetworkState] = useState<SolanaCluster>("devnet");
+  const [network, setNetworkState] = useState<SolanaCluster>(
+    (process.env.NEXT_PUBLIC_SOLANA_CLUSTER as SolanaCluster) || "devnet"
+  );
   const [customRpcUrl, setCustomRpcUrlState] = useState<string>("");
   const toast = useToast();
 
@@ -53,6 +64,11 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
       const savedNet = localStorage.getItem("dpi_network") as SolanaCluster;
       if (savedNet && CLUSTER_CONFIG[savedNet]) {
         setNetworkState(savedNet);
+      } else if (
+        process.env.NEXT_PUBLIC_SOLANA_CLUSTER &&
+        CLUSTER_CONFIG[process.env.NEXT_PUBLIC_SOLANA_CLUSTER as SolanaCluster]
+      ) {
+        setNetworkState(process.env.NEXT_PUBLIC_SOLANA_CLUSTER as SolanaCluster);
       }
       const savedRpc = localStorage.getItem("dpi_custom_rpc");
       if (savedRpc) {

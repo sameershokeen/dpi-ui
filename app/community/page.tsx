@@ -8,13 +8,13 @@ import StatusBadge from "@/components/StatusBadge";
 import { getDpiProgram, PROGRAM_ID } from "@/lib/dpi-program";
 import { triggerHaptic } from "@/lib/haptics";
 import { useToast } from "@/components/Toast";
+import CopyableAddress from "@/components/CopyableAddress";
 import {
   Megaphone,
   Globe,
   Shield,
   Zap,
   ExternalLink,
-  Sparkles,
   Users,
   Search,
   Loader,
@@ -23,8 +23,8 @@ import {
   CheckCircle,
   Send,
   AtSign,
-  Filter,
-  Check,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -98,6 +98,8 @@ export default function CommunityPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterState, setFilterState] = useState<"all" | "active" | "frozen">("all");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 20;
 
   const fetchDirectory = useCallback(async () => {
     if (!connection) return;
@@ -142,6 +144,17 @@ export default function CommunityPage() {
       return matchesSearch && matchesFilter;
     });
   }, [handles, searchQuery, filterState]);
+
+  // Reset page when search or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterState]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredHandles.length / PAGE_SIZE));
+  const paginatedHandles = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredHandles.slice(start, start + PAGE_SIZE);
+  }, [filteredHandles, currentPage, PAGE_SIZE]);
 
   const copyAddress = (address: string) => {
     triggerHaptic("tap");
@@ -299,7 +312,7 @@ export default function CommunityPage() {
               </Card>
             ) : (
               <div className="flex flex-col gap-2.5">
-                {filteredHandles.map((item) => {
+                {paginatedHandles.map((item) => {
                   const shortOwner = `${item.owner.slice(0, 6)}...${item.owner.slice(-4)}`;
                   const isCopied = copiedKey === item.owner;
 
@@ -330,19 +343,13 @@ export default function CommunityPage() {
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-400">
-                            <span>{shortOwner}</span>
-                            <button
-                              onClick={() => copyAddress(item.owner)}
-                              className="text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
-                              title="Copy owner address"
-                            >
-                              {isCopied ? (
-                                <CheckCircle size={11} className="text-emerald-400" />
-                              ) : (
-                                <Copy size={11} />
-                              )}
-                            </button>
+                          <div className="mt-1">
+                            <CopyableAddress
+                              address={item.owner}
+                              prefixLen={5}
+                              suffixLen={4}
+                              showExplorer={true}
+                            />
                           </div>
                         </div>
                       </div>
@@ -367,6 +374,39 @@ export default function CommunityPage() {
                     </Card>
                   );
                 })}
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between pt-3 border-t border-white/10 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic("tap");
+                        setCurrentPage((p) => Math.max(1, p - 1));
+                      }}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1 transition-colors cursor-pointer"
+                    >
+                      <ChevronLeft size={13} /> Prev
+                    </button>
+
+                    <span className="text-slate-400 font-mono text-[11px]">
+                      Page {currentPage} of {totalPages}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic("tap");
+                        setCurrentPage((p) => Math.min(totalPages, p + 1));
+                      }}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1 transition-colors cursor-pointer"
+                    >
+                      Next <ChevronRight size={13} />
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </>

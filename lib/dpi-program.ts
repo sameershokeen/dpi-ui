@@ -1,6 +1,6 @@
 import { Connection, PublicKey, SystemProgram } from "@solana/web3.js";
 import { Program, AnchorProvider } from "@coral-xyz/anchor";
-import dpiIdl from "./dpi_registry.json";
+import dpiIdl from "./dpi_registry.json" with { type: "json" };
 import type { DpiRegistry } from "@/types/dpi_registry";
 
 export const PROGRAM_ID = new PublicKey(
@@ -67,18 +67,6 @@ export function getReservedHandlePda(handle: string): [PublicKey, number] {
   );
 }
 
-// Aliases matching frontend.md recipes exactly
-export const deriveConfigPda = getConfigPda;
-export const deriveHandlePda = getHandlePda;
-export const deriveReverseLookupPda = getReverseLookupPda;
-export const deriveReservedHandlePda = getReservedHandlePda;
-
-// Backward-compatible uppercase aliases
-export const getConfigPDA = getConfigPda;
-export const getHandleRegistryPDA = getHandlePda;
-export const getReverseLookupPDA = getReverseLookupPda;
-export const getReservedHandlePDA = getReservedHandlePda;
-
 // ==========================================
 // 2. Client-Side Validation Rules
 // ==========================================
@@ -112,16 +100,46 @@ export function validateHandleInput(raw: string): { valid: boolean; error?: stri
   return { valid: true };
 }
 
-// Dual-format validation function for frontend.md compatibility
-export function validateHandle(handle: string): any {
+// Returns null if valid, or an error string message if invalid
+export function validateHandle(handle: string): string | null {
   const res = validateHandleInput(handle);
-  // If called in boolean context or object check
-  return {
-    valid: res.valid,
-    error: res.error,
-    // Allows string truthiness check if used as string validator
-    toString: () => res.error || "",
-  };
+  if (res.valid) {
+    return null;
+  }
+  return res.error || "Invalid handle";
+}
+
+/** Robust Solana transaction confirmation with blockhash timeout protection */
+export async function confirmTx(
+  connection: Connection,
+  signature: string,
+  commitment: "processed" | "confirmed" | "finalized" = "confirmed"
+): Promise<void> {
+  try {
+    const latest = await connection.getLatestBlockhash(commitment);
+    const confirmation = await Promise.race([
+      connection.confirmTransaction(
+        {
+          signature,
+          blockhash: latest.blockhash,
+          lastValidBlockHeight: latest.lastValidBlockHeight,
+        },
+        commitment
+      ),
+      new Promise<{ value: { err: any } }>((resolve) =>
+        setTimeout(() => resolve({ value: { err: null } }), 15000)
+      ),
+    ]);
+
+    if (confirmation?.value?.err) {
+      throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+    }
+  } catch {
+    const status = await connection.getSignatureStatus(signature).catch(() => null);
+    if (status?.value?.err) {
+      throw new Error(`Transaction failed: ${JSON.stringify(status.value.err)}`);
+    }
+  }
 }
 
 // ==========================================
@@ -199,22 +217,6 @@ export async function checkHandleAvailability(
   return { state: "AVAILABLE" };
 }
 
-// Backward-compatible alias
-export async function checkAvailability(
-  program: Program<DpiRegistry>,
-  handle: string
-) {
-  const status = await checkHandleAvailability(program, handle);
-  if (status.state === "RESERVED") return { status: "RESERVED" as const };
-  if (status.state === "REGISTERED") {
-    return {
-      status: "TAKEN" as const,
-      owner: status.owner,
-      frozen: status.frozen,
-    };
-  }
-  return { status: "AVAILABLE" as const };
-}
 
 /** Feature 2: Register Handle */
 export async function registerHandle(
@@ -616,45 +618,6 @@ export function initProtocolEventListener(
       } catch {}
     }
   };
-}
-
-export function subscribeToEvents(
-  program: Program<DpiRegistry>,
-  onEvent: (name: string, data: any) => void
-): number[] {
-  const listenerIds: number[] = [];
-
-  const events = [
-    "handleRegistered",
-    "handleTransferred",
-    "handleFrozen",
-    "handleUnfrozen",
-    "handleReserved",
-    "handleRecovered",
-    "configUpdated",
-  ] as const;
-
-  for (const eventName of events) {
-    try {
-      const id = (program as any).addEventListener(eventName, (event: any, slot: any) => {
-        onEvent(eventName, { event, slot });
-      });
-      listenerIds.push(id);
-    } catch {}
-  }
-
-  return listenerIds;
-}
-
-export function unsubscribeEvents(
-  program: Program<DpiRegistry>,
-  listenerIds: number[]
-) {
-  for (const id of listenerIds) {
-    try {
-      (program as any).removeEventListener(id);
-    } catch {}
-  }
 }
 
 // ==========================================

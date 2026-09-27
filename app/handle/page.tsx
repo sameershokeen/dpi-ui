@@ -1,12 +1,14 @@
 "use client";
 
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { PublicKey } from "@solana/web3.js";
+import { useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Card from "@/components/Card";
 import StatusBadge from "@/components/StatusBadge";
 import QRCodeModal from "@/components/QRCodeModal";
+import TransferHandleModal from "@/components/TransferHandleModal";
 import TransactionStepperModal, { StepperStage } from "@/components/TransactionStepperModal";
 import { WalletMultiButton } from "@/components/WalletButton";
 import { useToast } from "@/components/Toast";
@@ -18,10 +20,10 @@ import {
   checkHandleAvailability,
   parseAnchorError,
   validateHandle,
+  confirmTx,
 } from "@/lib/dpi-program";
 import { lookupHandleCached, lookupReverseCached, invalidateHandleCache } from "@/lib/dpi-cache";
 import {
-  AtSign,
   CheckCircle,
   XCircle,
   Loader,
@@ -37,6 +39,7 @@ import {
   Globe,
   X,
   Copy,
+  Share2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -44,17 +47,19 @@ type SearchState = "idle" | "checking" | "available" | "taken" | "reserved" | "e
 
 const POPULAR_SEARCH_SUGGESTIONS = ["solana", "satoshi", "vitalik", "alice", "bob", "pay", "dpi"];
 
-export default function HandlePage() {
+export function HandlePageContent() {
   const wallet = useWallet();
   const { publicKey, connected } = wallet;
   const { connection } = useConnection();
   const toast = useToast();
+  const searchParams = useSearchParams();
 
   // Search & Checker state
   const [searchTerm, setSearchTerm] = useState("");
   const [searchState, setSearchState] = useState<SearchState>("idle");
   const [searchOwner, setSearchOwner] = useState<string | null>(null);
   const [searchError, setSearchError] = useState("");
+  const [takenSuggestions, setTakenSuggestions] = useState<string[]>([]);
   const checkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // User's own registered handle
@@ -73,8 +78,14 @@ export default function HandlePage() {
 
   // Transfer Handle Modal State
   const [transferOpen, setTransferOpen] = useState(false);
-  const [newOwnerAddress, setNewOwnerAddress] = useState("");
-  const [transferring, setTransferring] = useState(false);
+
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Fetch current user's registered handle
   const loadMyHandle = useCallback(async () => {
@@ -82,9 +93,11 @@ export default function HandlePage() {
     setLoadingMyHandle(true);
     try {
       const handleStr = await lookupReverseCached(connection, publicKey);
+      if (!isMountedRef.current) return;
       if (handleStr) {
         setMyHandle(handleStr);
         const hrData = await lookupHandleCached(connection, handleStr);
+        if (!isMountedRef.current) return;
         if (hrData) {
           setMyHandleFrozen(hrData.frozen);
         }
@@ -93,22 +106,33 @@ export default function HandlePage() {
         setMyHandleFrozen(false);
       }
     } catch (err) {
+      if (!isMountedRef.current) return;
       console.warn("Failed reading my handle", err);
       setMyHandle(null);
     } finally {
-      setLoadingMyHandle(false);
+      if (isMountedRef.current) {
+        setLoadingMyHandle(false);
+      }
     }
   }, [publicKey, connection]);
 
   useEffect(() => {
+    let ignore = false;
     if (connected && publicKey) {
       loadMyHandle();
-      const stored = localStorage.getItem(`dpi_avatar_${publicKey.toBase58()}`);
-      setProfilePhoto(stored);
+      try {
+        const stored = localStorage.getItem(`dpi_avatar_${publicKey.toBase58()}`);
+        if (!ignore) setProfilePhoto(stored);
+      } catch (e) {
+        console.warn("Failed reading avatar from localStorage", e);
+      }
     } else {
       setMyHandle(null);
       setProfilePhoto(null);
     }
+    return () => {
+      ignore = true;
+    };
   }, [connected, publicKey, loadMyHandle]);
 
   // Handle checking logic
@@ -121,11 +145,12 @@ export default function HandlePage() {
       const lower = h.toLowerCase().trim();
       const validation = validateHandle(lower);
       if (validation) {
-        if (validation.includes("reserved")) {
+        const errorMsg = typeof validation === "string" ? validation : (validation as any)?.error || "Invalid handle";
+        if (errorMsg.toLowerCase().includes("reserved")) {
           setSearchState("reserved");
         } else {
           setSearchState("error");
-          setSearchError(validation);
+          setSearchError(errorMsg);
         }
         return;
       }
@@ -135,46 +160,68 @@ export default function HandlePage() {
         const status = await checkHandleAvailability(program, lower);
         if (status.state === "RESERVED") {
           setSearchState("reserved");
+          setTakenSuggestions([]);
           triggerHaptic("warning");
         } else if (status.state === "REGISTERED") {
           setSearchState("taken");
           setSearchOwner(status.owner.toBase58());
           triggerHaptic("warning");
+          // FEAT-011: Generate variants when taken
+          const candidates = [
+            `${lower}_sol`,
+            `${lower}1`,
+            `${lower}_pay`,
+            `${lower}dev`,
+          ].filter((c) => c.length >= 3 && c.length <= 20);
+          setTakenSuggestions(candidates);
         } else {
           setSearchState("available");
+          setTakenSuggestions([]);
           triggerHaptic("tap");
         }
       } catch (err: any) {
         setSearchState("error");
+        setTakenSuggestions([]);
         setSearchError(parseAnchorError(err) || "Failed to query Solana RPC");
       }
     },
     [connection]
   );
 
-  const onSearchInputChange = (val: string) => {
-    const lower = val.toLowerCase().replace(/[^a-z0-9_-]/g, "");
-    setSearchTerm(lower);
-    setSearchError("");
+  const onSearchInputChange = useCallback(
+    (val: string) => {
+      const lower = val.toLowerCase().replace(/[^a-z0-9_-]/g, "");
+      setSearchTerm(lower);
+      setSearchError("");
 
-    if (checkTimerRef.current) clearTimeout(checkTimerRef.current);
+      if (checkTimerRef.current) clearTimeout(checkTimerRef.current);
 
-    if (!lower) {
-      setSearchState("idle");
-      setSearchOwner(null);
-      return;
+      if (!lower) {
+        setSearchState("idle");
+        setSearchOwner(null);
+        setTakenSuggestions([]);
+        return;
+      }
+
+      if (lower.length < 3) {
+        setSearchState("idle");
+        return;
+      }
+
+      setSearchState("checking");
+      checkTimerRef.current = setTimeout(() => {
+        checkAvailability(lower);
+      }, 250);
+    },
+    [checkAvailability]
+  );
+
+  useEffect(() => {
+    const q = searchParams.get("search") || searchParams.get("q");
+    if (q) {
+      onSearchInputChange(q);
     }
-
-    if (lower.length < 3) {
-      setSearchState("idle");
-      return;
-    }
-
-    setSearchState("checking");
-    checkTimerRef.current = setTimeout(() => {
-      checkAvailability(lower);
-    }, 250);
-  };
+  }, [searchParams, onSearchInputChange]);
 
   const handleSuggestionClick = (suggestion: string) => {
     triggerHaptic("tap");
@@ -192,9 +239,10 @@ export default function HandlePage() {
 
     const validationError = validateHandle(targetHandle);
     if (validationError) {
-      setSearchError(validationError);
+      const errorMsg = typeof validationError === "string" ? validationError : (validationError as any)?.error || "Invalid Handle";
+      setSearchError(errorMsg);
       triggerHaptic("error");
-      toast.error(validationError, "Invalid Handle");
+      toast.error(errorMsg, "Invalid Handle");
       return;
     }
 
@@ -217,7 +265,7 @@ export default function HandlePage() {
       setStepperStage("broadcasting");
       const tx = await registerHandleSDK(program, wallet, targetHandle);
       setStepperStage("confirming");
-      await connection.confirmTransaction(tx, "confirmed");
+      await confirmTx(connection, tx, "confirmed");
 
       setTxSig(tx);
       setMyHandle(targetHandle);
@@ -240,53 +288,7 @@ export default function HandlePage() {
     }
   };
 
-  // Transfer Handle logic
-  const handleTransfer = async () => {
-    if (!publicKey || !myHandle || !newOwnerAddress) return;
 
-    let targetPubKey: PublicKey;
-    try {
-      targetPubKey = new PublicKey(newOwnerAddress.trim());
-    } catch {
-      toast.error("Invalid Solana address for new owner");
-      return;
-    }
-
-    if (targetPubKey.toBase58() === publicKey.toBase58()) {
-      toast.error("You are already the owner of this handle");
-      return;
-    }
-
-    setTransferring(true);
-    setStepperStage("signing");
-    setStepperOpen(true);
-    triggerHaptic("selection");
-
-    try {
-      const program = getDpiProgram(connection, wallet);
-      setStepperStage("broadcasting");
-      const tx = await transferHandleSDK(program, wallet, myHandle, targetPubKey);
-      setStepperStage("confirming");
-      await connection.confirmTransaction(tx, "confirmed");
-
-      invalidateHandleCache(myHandle, publicKey);
-      invalidateHandleCache(myHandle, targetPubKey);
-
-      setStepperStage("done");
-      triggerHaptic("success");
-      toast.success(`@${myHandle} transferred successfully!`);
-      setTransferOpen(false);
-      setMyHandle(null);
-      loadMyHandle();
-    } catch (err: any) {
-      triggerHaptic("error");
-      toast.error(parseAnchorError(err), "Transfer Error");
-      setStepperOpen(false);
-    } finally {
-      setTransferring(false);
-      setTimeout(() => setStepperOpen(false), 1500);
-    }
-  };
 
   const copyMyHandle = () => {
     if (!myHandle) return;
@@ -303,7 +305,13 @@ export default function HandlePage() {
 
       <div className="px-4 py-4 flex flex-col gap-4">
         {/* User's Registered Identity Card */}
-        {connected && myHandle && (
+        {connected && loadingMyHandle && (
+          <div className="rounded-3xl p-5 bg-white/4 border border-white/10 flex items-center justify-center gap-2 text-xs text-indigo-300">
+            <Loader size={15} className="animate-spin" />
+            <span>Resolving registered handle...</span>
+          </div>
+        )}
+        {connected && !loadingMyHandle && myHandle && (
           <div className="relative rounded-3xl p-5 bg-linear-to-br from-[#161D33] via-[#121728] to-[#0D101C] border-2 border-indigo-500/35 shadow-[0_8px_30px_rgba(99,102,241,0.25)] overflow-hidden backdrop-blur-2xl">
             <div className="absolute -top-10 -right-10 w-36 h-36 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none" />
 
@@ -351,31 +359,57 @@ export default function HandlePage() {
               </button>
             </div>
 
-            {/* Action buttons */}
-            <div className="grid grid-cols-3 gap-2">
+            {/* Action buttons (FEAT-015: Share button added) */}
+            <div className="grid grid-cols-4 gap-2">
               <Link
                 href={`/handle/${myHandle}`}
-                className="py-2 px-3 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-all text-center"
+                className="py-2 px-2 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-all text-center"
               >
                 <Globe size={13} />
-                Public Page
+                Profile
               </Link>
+              <button
+                type="button"
+                onClick={async () => {
+                  triggerHaptic("selection");
+                  const shareUrl = `${window.location.origin}/send?to=@${myHandle}`;
+                  if (typeof navigator !== "undefined" && navigator.share) {
+                    try {
+                      await navigator.share({
+                        title: `Send payment to @${myHandle} on DPI`,
+                        text: `Send me SOL or USDC directly using @${myHandle} on Solana Devnet!`,
+                        url: shareUrl,
+                      });
+                      toast.success("Shared successfully!");
+                      return;
+                    } catch (e: any) {
+                      if (e.name === "AbortError") return;
+                    }
+                  }
+                  navigator.clipboard.writeText(shareUrl);
+                  toast.success("Payment link copied!");
+                }}
+                className="py-2 px-2 rounded-xl bg-white/6 hover:bg-white/12 border border-white/10 text-white text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
+              >
+                <Share2 size={13} />
+                Share
+              </button>
               <button
                 onClick={() => {
                   triggerHaptic("tap");
                   setQrOpen(true);
                 }}
-                className="py-2 px-3 rounded-xl bg-white/6 hover:bg-white/12 border border-white/10 text-white text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+                className="py-2 px-2 rounded-xl bg-white/6 hover:bg-white/12 border border-white/10 text-white text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
               >
                 <QrCode size={13} />
-                QR Code
+                QR
               </button>
               <button
                 onClick={() => {
                   triggerHaptic("tap");
                   setTransferOpen(true);
                 }}
-                className="py-2 px-3 rounded-xl bg-white/6 hover:bg-white/12 border border-white/10 text-amber-300 text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+                className="py-2 px-2 rounded-xl bg-white/6 hover:bg-white/12 border border-white/10 text-amber-300 text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
               >
                 <ArrowRightLeft size={13} />
                 Transfer
@@ -561,6 +595,29 @@ export default function HandlePage() {
                   Send Payment
                 </Link>
               </div>
+
+              {/* FEAT-011: Alternative Suggestions */}
+              {takenSuggestions.length > 0 && (
+                <div className="pt-2.5 border-t border-indigo-500/20">
+                  <div className="text-[11px] font-bold text-slate-300 mb-2 flex items-center gap-1.5">
+                    <Sparkles size={12} className="text-amber-400" />
+                    <span>Suggested Available Alternatives:</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {takenSuggestions.map((sug) => (
+                      <button
+                        key={sug}
+                        type="button"
+                        onClick={() => handleSuggestionClick(sug)}
+                        className="text-xs font-mono font-semibold px-2.5 py-1.5 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/30 border border-indigo-400/30 hover:border-indigo-400/60 text-indigo-200 transition-all cursor-pointer flex items-center gap-1 active:scale-95"
+                      >
+                        <span>@{sug}</span>
+                        <span className="text-[10px] text-emerald-400 font-bold ml-0.5">Try →</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -629,61 +686,17 @@ export default function HandlePage() {
       </div>
 
       {/* Transfer Handle Modal */}
-      {transferOpen && myHandle && (
-        <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
-          onClick={() => setTransferOpen(false)}
-        >
-          <div
-            className="relative max-w-sm w-full bg-[#111827] border border-amber-500/30 rounded-3xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setTransferOpen(false)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
-            >
-              <X size={18} />
-            </button>
-
-            <div className="text-center">
-              <div className="w-10 h-10 mx-auto mb-2 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                <ArrowRightLeft size={18} />
-              </div>
-              <h3 className="text-base font-black text-white">Transfer @{myHandle}</h3>
-              <p className="text-xs text-slate-400 mt-1">
-                Transfer ownership to another Solana wallet address. This action cannot be undone.
-              </p>
-            </div>
-
-            <div>
-              <label className="text-[11px] font-bold text-slate-300 uppercase block mb-1.5">
-                New Owner Solana Address
-              </label>
-              <input
-                value={newOwnerAddress}
-                onChange={(e) => setNewOwnerAddress(e.target.value)}
-                placeholder="New wallet public key (base58)"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white/4 border border-white/10 text-xs font-mono text-white outline-none focus:border-amber-400/50"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 mt-1">
-              <button
-                onClick={() => setTransferOpen(false)}
-                className="py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-white transition-all cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleTransfer}
-                disabled={transferring || !newOwnerAddress}
-                className="py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black active:scale-95 transition-all cursor-pointer disabled:opacity-50"
-              >
-                {transferring ? "Transferring..." : "Confirm Transfer"}
-              </button>
-            </div>
-          </div>
-        </div>
+      {myHandle && (
+        <TransferHandleModal
+          isOpen={transferOpen}
+          onClose={() => setTransferOpen(false)}
+          handle={myHandle}
+          isFrozen={Boolean(myHandleFrozen)}
+          onSuccess={() => {
+            setMyHandle(null);
+            loadMyHandle();
+          }}
+        />
       )}
 
       {/* QR Code Modal for user's own handle */}
@@ -696,7 +709,7 @@ export default function HandlePage() {
           value={
             typeof window !== "undefined"
               ? `${window.location.origin}/handle/${myHandle}`
-              : `https://dpi-app.dev/handle/${myHandle}`
+              : `${process.env.NEXT_PUBLIC_APP_URL || ""}/handle/${myHandle}`
           }
           handle={myHandle}
         />
@@ -712,7 +725,23 @@ export default function HandlePage() {
             ? `Transferring @${myHandle} to new owner...`
             : `Claiming @${searchTerm} on Solana Devnet...`
         }
+        txSig={txSig}
       />
     </div>
+  );
+}
+
+export default function HandlePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full min-h-[60vh] flex flex-col items-center justify-center gap-3 p-8 text-indigo-400">
+          <Loader className="animate-spin" size={28} />
+          <span className="text-xs text-slate-400">Loading handles...</span>
+        </div>
+      }
+    >
+      <HandlePageContent />
+    </Suspense>
   );
 }

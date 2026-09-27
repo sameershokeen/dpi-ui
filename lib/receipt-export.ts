@@ -1,5 +1,6 @@
 /**
  * Generates and downloads a clean, branded PNG receipt image using HTML5 Canvas.
+ * Supports Web Share API (FEAT-023) and transaction memos (FEAT-004).
  */
 export interface ReceiptDetails {
   txSig: string;
@@ -8,11 +9,12 @@ export interface ReceiptDetails {
   recipient: string;
   sender?: string;
   timestamp?: string;
+  memo?: string;
 }
 
-export async function exportReceiptAsImage(details: ReceiptDetails) {
+export async function exportReceiptAsImage(details: ReceiptDetails): Promise<void> {
   const width = 600;
-  const height = 750;
+  const height = details.memo ? 800 : 750;
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
@@ -96,30 +98,79 @@ export async function exportReceiptAsImage(details: ReceiptDetails) {
     ? `${details.txSig.slice(0, 12)}...${details.txSig.slice(-10)}`
     : "Confirmed";
 
-  drawRow("Recipient", details.recipient, 350);
-  drawRow("Asset", details.tokenSymbol, 395);
-  drawRow("Date & Time", formattedTime, 440);
-  drawRow("Transaction Hash", shortSig, 485, true);
-  drawRow("Status", "On-Chain Confirmed (Finalized)", 530);
+  let curY = 350;
+  drawRow("Recipient", details.recipient, curY);
+  curY += 45;
+  drawRow("Asset", details.tokenSymbol, curY);
+  curY += 45;
+
+  if (details.memo) {
+    drawRow("Memo", `"${details.memo}"`, curY);
+    curY += 45;
+  }
+
+  drawRow("Date & Time", formattedTime, curY);
+  curY += 45;
+  drawRow("Transaction Hash", shortSig, curY, true);
+  curY += 45;
+  drawRow("Status", "On-Chain Confirmed (Finalized)", curY);
+  curY += 40;
 
   // 9. Footer
   ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
   ctx.beginPath();
-  ctx.moveTo(60, 570);
-  ctx.lineTo(540, 570);
+  ctx.moveTo(60, curY);
+  ctx.lineTo(540, curY);
   ctx.stroke();
 
   ctx.textAlign = "center";
   ctx.fillStyle = "#64748B";
   ctx.font = "12px sans-serif";
-  ctx.fillText("Privacy like crypto. Simplicity like UPI.", 300, 620);
-  ctx.fillText("dpi.solana · Powered by Solana Devnet", 300, 642);
+  ctx.fillText("Privacy like crypto. Simplicity like UPI.", 300, curY + 40);
+  ctx.fillText("dpi.solana · Powered by Solana Devnet", 300, curY + 62);
 
-  // 10. Download
+  // 10. Web Share API Level 2 (FEAT-023) or Fallback Download
+  const filename = `dpi-receipt-${details.recipient.replace(/^@/, "")}-${Date.now()}.png`;
+
+  return new Promise((resolve) => {
+    canvas.toBlob(async (blob) => {
+      if (!blob) {
+        fallbackDownload(canvas, filename);
+        resolve();
+        return;
+      }
+
+      if (typeof navigator !== "undefined" && navigator.canShare) {
+        try {
+          const file = new File([blob], filename, { type: "image/png" });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              title: "DPI Payment Receipt",
+              text: `Payment Receipt for ${details.amount} ${details.tokenSymbol} sent to ${details.recipient}`,
+              files: [file],
+            });
+            resolve();
+            return;
+          }
+        } catch (e: any) {
+          if (e.name === "AbortError") {
+            resolve();
+            return;
+          }
+        }
+      }
+
+      fallbackDownload(canvas, filename);
+      resolve();
+    }, "image/png");
+  });
+}
+
+function fallbackDownload(canvas: HTMLCanvasElement, filename: string) {
   const dataUrl = canvas.toDataURL("image/png");
   const a = document.createElement("a");
   a.href = dataUrl;
-  a.download = `dpi-receipt-${details.recipient.replace(/^@/, "")}-${Date.now()}.png`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

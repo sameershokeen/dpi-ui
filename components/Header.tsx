@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@/components/WalletButton";
-import { ChevronLeft, Globe, ShieldCheck } from "lucide-react";
+import { ChevronLeft, Globe, ShieldCheck, Sun, Moon, Bell } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useNetwork, CLUSTER_CONFIG } from "@/components/NetworkContext";
 import NetworkSwitcherModal from "@/components/NetworkSwitcherModal";
+import NotificationPreferencesModal from "@/components/NotificationPreferencesModal";
+import { useTheme } from "@/components/ThemeContext";
 import { triggerHaptic } from "@/lib/haptics";
 import { getDpiProgram, checkIsAdmin } from "@/lib/dpi-program";
 
@@ -27,7 +29,9 @@ export default function Header({
   const { network } = useNetwork();
   const { connection } = useConnection();
   const { publicKey } = useWallet();
+  const { theme, resolvedTheme, toggleTheme } = useTheme();
   const [networkModalOpen, setNetworkModalOpen] = useState(false);
+  const [notifModalOpen, setNotifModalOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const currentConfig = CLUSTER_CONFIG[network] || CLUSTER_CONFIG.devnet;
 
@@ -56,7 +60,7 @@ export default function Header({
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-[#090B10]/80 backdrop-blur-xl border-b border-white/6 px-4 py-3 flex items-center justify-between gap-3">
+      <header className="sticky top-0 z-40 bg-[var(--bg-base)]/85 backdrop-blur-xl border-b border-white/6 px-4 py-3 flex items-center justify-between gap-3 transition-colors">
         <div className="flex items-center gap-3">
           {showBack && (
             <button
@@ -106,7 +110,7 @@ export default function Header({
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Admin Badge */}
           {isAdmin && (
             <Link
@@ -116,9 +120,38 @@ export default function Header({
               title="DPI Protocol Admin Console"
             >
               <ShieldCheck size={13} className="text-purple-300" />
-              <span>Admin</span>
+              <span className="hidden sm:inline">Admin</span>
             </Link>
           )}
+
+          {/* Theme Toggle (FEAT-046) */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
+            title={`Switch to ${resolvedTheme === "dark" ? "Light" : "Dark"} mode`}
+            aria-label="Toggle Theme"
+          >
+            {resolvedTheme === "dark" ? (
+              <Sun size={15} className="text-amber-300" />
+            ) : (
+              <Moon size={15} className="text-indigo-400" />
+            )}
+          </button>
+
+          {/* Notifications Preferences (FEAT-022) */}
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic("tap");
+              setNotifModalOpen(true);
+            }}
+            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
+            title="Notification & Sound Preferences"
+            aria-label="Notification Preferences"
+          >
+            <Bell size={15} />
+          </button>
 
           {title && (
             <button
@@ -127,7 +160,7 @@ export default function Header({
                 triggerHaptic("tap");
                 setNetworkModalOpen(true);
               }}
-              className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
+              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
               title="Change Solana Network"
             >
               <Globe size={15} />
@@ -145,6 +178,11 @@ export default function Header({
       <NetworkSwitcherModal
         isOpen={networkModalOpen}
         onClose={() => setNetworkModalOpen(false)}
+      />
+
+      <NotificationPreferencesModal
+        isOpen={notifModalOpen}
+        onClose={() => setNotifModalOpen(false)}
       />
     </>
   );

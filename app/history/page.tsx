@@ -1,15 +1,19 @@
 "use client";
 
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import Header from "@/components/Header";
 import Card from "@/components/Card";
-import { getReverseLookupPDA, fetchRecentProtocolActivity, PROGRAM_ID } from "@/lib/dpi-program";
+import { getReverseLookupPda, fetchRecentProtocolActivity, PROGRAM_ID } from "@/lib/dpi-program";
+import { getTokenMetaByMint } from "@/lib/tokens";
 import { triggerHaptic } from "@/lib/haptics";
 import { exportReceiptAsImage } from "@/lib/receipt-export";
 import { useToast } from "@/components/Toast";
+import EmptyState from "@/components/EmptyState";
+import PullToRefresh from "@/components/PullToRefresh";
+import { useNetwork, getExplorerUrl } from "@/components/NetworkContext";
 import {
   ArrowUpRight,
   ArrowDownLeft,
@@ -24,6 +28,8 @@ import {
   CheckCircle,
   Zap,
   Activity,
+  Download,
+  Filter,
 } from "lucide-react";
 
 interface ParsedTx {
@@ -50,30 +56,54 @@ interface ProtocolTx {
 export default function HistoryPage() {
   const { publicKey, connected } = useWallet();
   const { connection } = useConnection();
+  const { network } = useNetwork();
   const router = useRouter();
   const toast = useToast();
 
   const [activeTab, setActiveTab] = useState<"wallet" | "protocol">("wallet");
+  const [directionFilter, setDirectionFilter] = useState<"all" | "send" | "receive">("all");
+  const [tokenFilter, setTokenFilter] = useState<string>("all");
   const [txs, setTxs] = useState<ParsedTx[]>([]);
   const [protocolTxs, setProtocolTxs] = useState<ProtocolTx[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [loadingProtocol, setLoadingProtocol] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [copiedSig, setCopiedSig] = useState<string | null>(null);
 
-  const fetchHistory = useCallback(async () => {
+  const txsRef = useRef<ParsedTx[]>([]);
+  txsRef.current = txs;
+
+  const fetchHistory = useCallback(async (isLoadMore: boolean = false) => {
     if (!publicKey || !connection) return;
-    setLoading(true);
+    if (isLoadMore) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
     setErrorMsg("");
 
     try {
       // 1. Fetch recent signatures
-      const signatures = await connection.getSignaturesForAddress(publicKey, { limit: 15 });
+      const lastSig = isLoadMore && txsRef.current.length > 0
+        ? txsRef.current[txsRef.current.length - 1].signature
+        : undefined;
+
+      const signatures = await connection.getSignaturesForAddress(publicKey, {
+        limit: 15,
+        before: lastSig,
+      });
+
+      if (signatures.length < 15) {
+        setHasMore(false);
+      } else {
+        setHasMore(true);
+      }
 
       if (signatures.length === 0) {
-        setTxs([]);
-        setLoading(false);
+        if (!isLoadMore) setTxs([]);
         return;
       }
 
@@ -141,33 +171,47 @@ export default function HistoryPage() {
                 const info = (tokenIx as any).parsed.info;
                 const mint = info.mint;
                 const rawAmount = info.amount || info.tokenAmount?.amount;
-                const src = info.authority || info.source;
-                const dst = info.destination;
+                const srcAtaOrOwner = info.source;
+                const dstAta = info.destination;
 
-                const decimals = 6;
-                let symbol = "Token";
-                if (
-                  mint === "4zMMC9zT5H24GsmVBtBq7B8RFKu1e79mksqtCRRjh482" ||
-                  mint === "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
-                ) {
-                  symbol = "USDC";
-                } else if (mint === "HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr") {
-                  symbol = "EURC";
-                } else if (mint === "CXk2AMBfi3TwaEL2468s6zP8xq9NxTXjp9gjMgzeUynM") {
-                  symbol = "PYUSD";
-                } else if (mint) {
-                  symbol = `SPL (${mint.slice(0, 4)}...${mint.slice(-4)})`;
+                // Build ATA -> Owner map from pre & post token balances
+                const ataToOwnerMap: Record<string, string> = {};
+                const allBalances = [
+                  ...((tx.meta as any).preTokenBalances || []),
+                  ...((tx.meta as any).postTokenBalances || []),
+                ];
+                for (const bal of allBalances) {
+                  if (bal.owner && bal.accountIndex !== undefined) {
+                    const key = (message as any).accountKeys[bal.accountIndex];
+                    const pubkeyStr = typeof key === "string"
+                      ? key
+                      : (key?.pubkey
+                          ? (typeof key.pubkey === "string" ? key.pubkey : key.pubkey.toBase58?.() || String(key.pubkey))
+                          : null);
+                    if (pubkeyStr) {
+                      ataToOwnerMap[pubkeyStr] = bal.owner;
+                    }
+                  }
                 }
 
-                amount = rawAmount ? parseFloat(rawAmount) / Math.pow(10, decimals) : null;
+                const srcOwner = info.authority || ataToOwnerMap[srcAtaOrOwner] || srcAtaOrOwner;
+                const dstOwner = ataToOwnerMap[dstAta] || dstAta;
+
+                const meta = getTokenMetaByMint(mint);
+                const decimals = info.tokenAmount?.decimals ?? meta.decimals ?? 6;
+                const symbol = meta.symbol;
+
+                amount = info.tokenAmount?.uiAmount !== undefined && info.tokenAmount?.uiAmount !== null
+                  ? info.tokenAmount.uiAmount
+                  : (rawAmount ? parseFloat(rawAmount) / Math.pow(10, decimals) : null);
                 tokenSymbol = symbol;
 
-                if (src === userAddrStr) {
+                if (srcOwner === userAddrStr || info.authority === userAddrStr || srcAtaOrOwner === userAddrStr) {
                   type = "send";
-                  counterparty = dst;
+                  counterparty = dstOwner;
                 } else {
                   type = "receive";
-                  counterparty = src;
+                  counterparty = srcOwner;
                 }
               }
             }
@@ -196,7 +240,7 @@ export default function HistoryPage() {
         try {
           const pdas = counterpartiesToResolve.map((cp) => {
             const cpKey = new PublicKey(cp.address);
-            const [reversePDA] = getReverseLookupPDA(cpKey);
+            const [reversePDA] = getReverseLookupPda(cpKey);
             return reversePDA;
           });
 
@@ -223,11 +267,16 @@ export default function HistoryPage() {
         } catch {}
       }
 
-      setTxs(parsedList);
-    } catch (err: any) {
+      if (isLoadMore) {
+        setTxs((prev) => [...prev, ...parsedList]);
+      } else {
+        setTxs(parsedList);
+      }
+    } catch {
       setErrorMsg("Failed to fetch wallet history. Please try again.");
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }, [publicKey, connection]);
 
@@ -252,21 +301,80 @@ export default function HistoryPage() {
   }, [connected, publicKey, fetchHistory, fetchProtocolFeed]);
 
   const filteredTxs = useMemo(() => {
-    if (!searchQuery) return txs;
-    const q = searchQuery.toLowerCase();
-    return txs.filter(
-      (tx) =>
-        tx.signature.toLowerCase().includes(q) ||
-        (tx.counterparty && tx.counterparty.toLowerCase().includes(q)) ||
-        (tx.counterpartyHandle && tx.counterpartyHandle.toLowerCase().includes(q))
-    );
-  }, [txs, searchQuery]);
+    let list = txs;
+    if (directionFilter !== "all") {
+      list = list.filter((tx) => tx.type === directionFilter);
+    }
+    if (tokenFilter !== "all") {
+      list = list.filter(
+        (tx) => (tx.tokenSymbol || "SOL").toUpperCase() === tokenFilter.toUpperCase()
+      );
+    }
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(
+        (tx) =>
+          tx.signature.toLowerCase().includes(q) ||
+          (tx.counterparty && tx.counterparty.toLowerCase().includes(q)) ||
+          (tx.counterpartyHandle && tx.counterpartyHandle.toLowerCase().includes(q)) ||
+          (tx.amount !== null && tx.amount.toString().includes(q))
+      );
+    }
+    return list;
+  }, [txs, directionFilter, tokenFilter, searchQuery]);
 
   const filteredProtocolTxs = useMemo(() => {
     if (!searchQuery) return protocolTxs;
     const q = searchQuery.toLowerCase();
     return protocolTxs.filter((tx) => tx.signature.toLowerCase().includes(q));
   }, [protocolTxs, searchQuery]);
+
+  const exportHistoryCSV = () => {
+    if (filteredTxs.length === 0) {
+      toast.error("No transactions to export");
+      return;
+    }
+    triggerHaptic("selection");
+    const headers = [
+      "Signature",
+      "Date",
+      "Direction",
+      "Amount",
+      "Token",
+      "Status",
+      "Counterparty",
+      "Counterparty Handle",
+    ];
+    const rows = filteredTxs.map((t) => [
+      t.signature,
+      t.blockTime ? new Date(t.blockTime * 1000).toISOString() : "Pending",
+      t.type,
+      t.amount !== null ? t.amount : 0,
+      t.tokenSymbol || "SOL",
+      t.status,
+      t.counterparty || "",
+      t.counterpartyHandle ? `@${t.counterpartyHandle}` : "",
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((r) => r.map((c) => `"${c}"`).join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `dpi-transactions-${new Date().toISOString().slice(0, 10)}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success("Transactions exported to CSV!");
+  };
 
   const formatDate = (blockTime: number | null) => {
     if (!blockTime) return "Pending";
@@ -357,22 +465,73 @@ export default function HistoryPage() {
           </button>
         </div>
 
+        {/* Filters Bar & CSV Export (FEAT-010) */}
+        {activeTab === "wallet" && connected && (
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+            {/* Direction filter pills */}
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-white/4 border border-white/8 text-[11px] font-bold">
+              {(["all", "send", "receive"] as const).map((dir) => (
+                <button
+                  key={dir}
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic("tap");
+                    setDirectionFilter(dir);
+                  }}
+                  className={`px-2.5 py-1 rounded-lg transition-all capitalize cursor-pointer ${
+                    directionFilter === dir
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  {dir === "all" ? "All" : dir === "send" ? "Sent" : "Received"}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Token filter */}
+              <select
+                value={tokenFilter}
+                onChange={(e) => {
+                  triggerHaptic("tap");
+                  setTokenFilter(e.target.value);
+                }}
+                className="px-2.5 py-1.5 rounded-xl bg-white/4 border border-white/8 text-[11px] font-bold text-slate-300 outline-none cursor-pointer"
+              >
+                <option value="all" className="bg-[#121626]">All Tokens</option>
+                <option value="SOL" className="bg-[#121626]">SOL</option>
+                <option value="USDC" className="bg-[#121626]">USDC</option>
+                <option value="EURC" className="bg-[#121626]">EURC</option>
+                <option value="PYUSD" className="bg-[#121626]">PYUSD</option>
+              </select>
+
+              {/* Export CSV button (FEAT-010) */}
+              <button
+                type="button"
+                onClick={exportHistoryCSV}
+                className="px-2.5 py-1.5 rounded-xl bg-white/4 hover:bg-white/8 border border-white/8 text-[11px] font-bold text-indigo-300 hover:text-white flex items-center gap-1 transition-all cursor-pointer active:scale-95"
+                title="Export transactions as CSV"
+              >
+                <Download size={13} />
+                <span>CSV</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {activeTab === "wallet" ? (
-          /* Wallet Activity View */
+          /* Wallet Activity View with PullToRefresh (FEAT-036) */
           !connected ? (
-            <Card className="p-8 text-center flex flex-col items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
-                <Clock size={24} />
-              </div>
-              <h2 className="text-sm font-bold text-white">Connect Your Wallet</h2>
-              <p className="text-xs text-slate-400 max-w-xs">
-                Connect your wallet to view real-time personal transaction receipts and transfers.
-              </p>
-            </Card>
+            <EmptyState
+              type="not-connected"
+              title="Connect Your Wallet"
+              description="Connect your Solana wallet to view real-time personal transaction receipts and transfers."
+            />
           ) : (
-            <>
+            <PullToRefresh onRefresh={() => fetchHistory(false)}>
               {errorMsg && (
-                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs text-center">
+                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs text-center mb-3">
                   {errorMsg}
                 </div>
               )}
@@ -390,19 +549,20 @@ export default function HistoryPage() {
                   ))}
                 </div>
               ) : filteredTxs.length === 0 ? (
-                <Card className="p-8 text-center flex flex-col items-center gap-2">
-                  <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-500">
-                    <Clock size={20} />
-                  </div>
-                  <div className="text-xs font-bold text-white">No transactions found</div>
-                  <div className="text-[11px] text-slate-500">
-                    {searchQuery
-                      ? "No records matched your search query"
-                      : "Send SOL or tokens using @handles to see your receipts here"}
-                  </div>
-                </Card>
+                <EmptyState
+                  type={searchQuery || directionFilter !== "all" || tokenFilter !== "all" ? "no-results" : "no-history"}
+                  title={searchQuery || directionFilter !== "all" || tokenFilter !== "all" ? "No Matching Transactions" : "No Transactions Yet"}
+                  description={
+                    searchQuery || directionFilter !== "all" || tokenFilter !== "all"
+                      ? "No records matched your selected filters or search terms."
+                      : "Send SOL or tokens using @handles to see your receipts here."
+                  }
+                  actionText="Send Assets"
+                  actionHref="/send"
+                />
               ) : (
-                <Card className="overflow-hidden divide-y divide-white/6">
+                <>
+                  <Card className="overflow-hidden divide-y divide-white/6">
                   {filteredTxs.map((tx) => {
                     const isOutgoing = tx.type === "send";
                     const isIncoming = tx.type === "receive";
@@ -506,7 +666,7 @@ export default function HistoryPage() {
                             <Receipt size={13} />
                           </button>
                           <a
-                            href={`https://explorer.solana.com/tx/${tx.signature}?cluster=devnet`}
+                            href={getExplorerUrl("tx", tx.signature, network)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all"
@@ -519,8 +679,32 @@ export default function HistoryPage() {
                     );
                   })}
                 </Card>
-              )}
-            </>
+
+                {hasMore && !searchQuery && (
+                  <div className="flex justify-center pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic("tap");
+                        fetchHistory(true);
+                      }}
+                      disabled={loadingMore}
+                      className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 hover:text-white flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {loadingMore ? (
+                        <>
+                          <RefreshCw size={13} className="animate-spin text-indigo-400" />
+                          <span>Loading older transactions...</span>
+                        </>
+                      ) : (
+                        <span>Load More Transactions</span>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+            </PullToRefresh>
           )
         ) : (
           /* Global Protocol Activity Feed View */

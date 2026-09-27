@@ -3,6 +3,8 @@
   "short_name": "DPI",
   "description": "Decentralized handle registry and instant payment protocol on Solana.",
   "start_url": "/",
+  "scope": "/",
+  "id": "/",
   "display": "standalone",
   "background_color": "#090B10",
   "theme_color": "#090B10",
